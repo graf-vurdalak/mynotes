@@ -1,5 +1,9 @@
 from .dev import *  # noqa: F401,F403
 
+# Keep email tests independent of SMTP and local environment settings.
+EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@example.com"
+
 # Автотесты герметичны: local-бэкенд default принудительно, даже когда контейнер
 # задал S3_* в os.environ (compose dev подаёт http://s3:8333 для web/worker).
 # Выбор local/S3 в настройках покрывается tests/unit/test_storage_settings.py,

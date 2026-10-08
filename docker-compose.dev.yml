@@ -132,7 +132,7 @@ services:
       - .:/app
     environment:
       - DEBUG=True
-      - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - DJANGO_SETTINGS_MODULE=config.settings.test
       - POSTGRES_HOST=db
       - REDIS_URL=redis://redis:6379/0
     depends_on:
