@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Новый автомобиль — Бортжурнал</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ============ САЙДБАР ============ -->
+  <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200">
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="font-bold text-slate-900">Мои записи</div>
+        <div class="text-xs text-slate-500">v1.0</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Дашборд
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+        </svg>
+        Бортжурнал
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        Записная книжка
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Отчёты
+      </a>
+    </nav>
+
+    <div class="border-t border-slate-100 p-3">
+      <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">ИП</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-slate-900 truncate">Иван Петров</div>
+          <div class="text-xs text-slate-500 truncate">ivan@example.com</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Верхняя панель -->
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="#" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">Мой автопарк</div>
+          <div class="text-sm font-semibold text-slate-900">Новый автомобиль</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button class="hidden sm:inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition">
+          Отмена
+        </button>
+        <button class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Сохранить
+        </button>
+      </div>
+    </header>
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-5xl mx-auto">
+
+        <!-- Заголовок (для мобильных) -->
+        <div class="sm:hidden mb-5">
+          <h1 class="text-2xl font-bold text-slate-900">Новый автомобиль</h1>
+          <p class="text-sm text-slate-500 mt-1">Заполните марку, модель и характеристики</p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- ============ ЛЕВАЯ КОЛОНКА: ФОРМА ============ -->
+          <div class="xl:col-span-2 space-y-5">
+
+            <!-- Блок 1: Фото -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </span>
+                Фотография
+              </h2>
+
+              <div class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-6 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30">
+                <svg class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                <div class="text-sm font-medium text-slate-700">Перетащите файл или нажмите для загрузки</div>
+                <div class="text-xs text-slate-500 mt-1">JPG, PNG до 10 МБ</div>
+              </div>
+              <!-- Превью после загрузки -->
+              <div class="hidden mt-3 flex items-center gap-3 bg-slate-50 rounded-xl p-3">
+                <img src="https://via.placeholder.com/64x48?text=Фото" class="w-16 h-12 rounded-lg object-cover" alt="Превью">
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-medium text-slate-900 truncate">camry-photo.jpg</div>
+                  <div class="text-xs text-slate-500">1.2 МБ</div>
+                </div>
+                <button class="text-xs text-red-600 hover:text-red-800 font-medium">Удалить</button>
+              </div>
+            </div>
+
+            <!-- Блок 2: Марка и модель -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                  </svg>
+                </span>
+                Марка и модель
+              </h2>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Марка -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Марка</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>Выберите марку…</option>
+                    <option selected>Toyota</option>
+                    <option>Kia</option>
+                    <option>Hyundai</option>
+                    <option>Lada</option>
+                    <option>+ Своя марка…</option>
+                  </select>
+                </div>
+
+                <!-- Модель (зависимый от марки) -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Модель</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>Выберите модель…</option>
+                    <option selected>Camry</option>
+                    <option>Corolla</option>
+                    <option>RAV4</option>
+                    <option>Land Cruiser</option>
+                  </select>
+                </div>
+
+                <!-- Год -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Год выпуска</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>Выберите год…</option>
+                    <option>2024</option>
+                    <option>2023</option>
+                    <option>2022</option>
+                    <option selected>2021</option>
+                    <option>2020</option>
+                  </select>
+                </div>
+
+                <!-- Модификация -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Модификация <span class="text-slate-400 font-normal">(необязательно)</span></label>
+                  <input type="text" value="XV70 · Рестайлинг" placeholder="Например: Рестайлинг"
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+              </div>
+            </div>
+
+            <!-- Блок 3: Идентификация -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
+                  </svg>
+                </span>
+                Идентификация
+              </h2>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Гос. номер -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Гос. номер</label>
+                  <input type="text" value="А777АА 77" placeholder="А000АА 77"
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase">
+                </div>
+
+                <!-- VIN -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    VIN
+                    <span class="text-slate-400 font-normal">· 17 знаков</span>
+                  </label>
+                  <input type="text" value="XW7BF4FK50S123456" maxlength="17" placeholder="17 символов"
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent uppercase">
+                  <p class="text-xs text-emerald-600 mt-1 flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                    Корректная длина
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Блок 4: Технические характеристики -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                </span>
+                Технические характеристики
+              </h2>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Топливо -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Тип топлива</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option selected>Бензин АИ-95</option>
+                    <option>Бензин АИ-92</option>
+                    <option>Бензин АИ-98</option>
+                    <option>Дизель</option>
+                    <option>Газ</option>
+                    <option>Электро</option>
+                    <option>Гибрид</option>
+                  </select>
+                </div>
+
+                <!-- Объём двигателя -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Объём двигателя
+                    <span class="text-slate-400 font-normal">· л</span>
+                  </label>
+                  <input type="number" step="0.1" value="2.5" placeholder="2.5"
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Мощность -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Мощность
+                    <span class="text-slate-400 font-normal">· л.с.</span>
+                  </label>
+                  <input type="number" value="200" placeholder="200"
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- КПП -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Коробка передач</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option selected>АКПП</option>
+                    <option>МКПП</option>
+                    <option>Вариатор</option>
+                    <option>Робот</option>
+                  </select>
+                </div>
+
+                <!-- Привод -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Привод</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>Передний</option>
+                    <option>Задний</option>
+                    <option selected>Полный</option>
+                  </select>
+                </div>
+
+                <!-- Текущий пробег -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Текущий пробег
+                    <span class="text-slate-400 font-normal">· км</span>
+                  </label>
+                  <input type="number" value="156420" placeholder="0"
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+              </div>
+            </div>
+
+            <!-- Нижние кнопки (для мобильных) -->
+            <div class="flex flex-col sm:flex-row gap-2 sm:hidden">
+              <button class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg transition">
+                Отмена
+              </button>
+              <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+                Сохранить
+              </button>
+            </div>
+
+          </div>
+
+          <!-- ============ ПРАВАЯ КОЛОНКА: ПОДСКАЗКИ ============ -->
+          <div class="xl:col-span-1 space-y-4">
+
+            <!-- Статус по умолчанию -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+              <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Статус
+              </h3>
+              <label class="flex items-center gap-3 w-full p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                <input type="checkbox" checked class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                <div>
+                  <div class="text-sm font-medium text-slate-900">Сделать активным</div>
+                  <div class="text-xs text-slate-500">Использовать по умолчанию в заправках и расчётах</div>
+                </div>
+              </label>
+            </div>
+
+            <!-- Подсказка -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <div class="flex gap-3">
+                <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-xs text-amber-900">
+                  <div class="font-semibold mb-1">Совет</div>
+                  <div>VIN нужен только для вашего удобства — он никуда не передаётся и защищён паролем.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Заполнено -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
+              <div class="text-sm text-blue-100 mb-2">Заполнено</div>
+              <div class="text-3xl font-bold mb-1">7 из 10</div>
+              <div class="h-2 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full w-[70%] bg-white rounded-full"></div>
+              </div>
+              <div class="text-xs text-blue-100 mt-2">Фото, модификация, VIN — по желанию</div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

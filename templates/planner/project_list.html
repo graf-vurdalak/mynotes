@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'pl.projects' %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% t 'pl.projects' as header_ttl %}
+    {% url 'planner:project_create' as proj_new_url %}
+    {% t 'pl.project_new' as btn_new %}
+    {% url 'reports:export_xlsx' 'projects' as proj_export_url %}
+    {% url 'reports:export_pdf' 'projects' as proj_pdf_url %}
+    {% t 'exp.excel' as btn_xlsx %}
+    {% t 'exp.pdf' as btn_pdf %}
+    {% with header_actions='<a href="'|add:proj_export_url|add:'" class="inline-flex items-center gap-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition text-sm">'|add:btn_xlsx|add:'</a><a href="'|add:proj_pdf_url|add:'" class="inline-flex items-center gap-2 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition text-sm">'|add:btn_pdf|add:'</a><a href="'|add:proj_new_url|add:'" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition text-sm">'|add:btn_new|add:'</a>' %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl %}
+    {% endwith %}
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      {% if messages %}{% for m in messages %}<div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ m }}</div>{% endfor %}{% endif %}
+
+      <div class="flex gap-2 bg-slate-100 rounded-lg p-1 w-fit mb-6">
+        <a href="{% url 'planner:projects' %}" class="px-4 py-2 text-sm font-medium rounded-md {% if not scope_code %}bg-white text-slate-900 shadow-sm{% else %}text-slate-600{% endif %}">{% t 'pl.filter_all' %}</a>
+        <a href="?scope=personal" class="px-4 py-2 text-sm font-medium rounded-md {% if scope_code == 'personal' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-600{% endif %}">📅 {% t 'pl.scope_personal' %}</a>
+        <a href="?scope=work" class="px-4 py-2 text-sm font-medium rounded-md {% if scope_code == 'work' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-600{% endif %}">💼 {% t 'pl.scope_work' %}</a>
+      </div>
+
+      <div class="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+        {% for p in projects %}
+          <div class="bg-white rounded-xl border {% if p.is_archived %}border-dashed opacity-70{% else %}border-slate-200{% endif %} p-5 hover:shadow-md transition">
+            <div class="flex items-start justify-between mb-3">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="w-3 h-3 rounded-full flex-shrink-0" style="background: {{ p.color }}"></span>
+                <h3 class="font-bold text-slate-900 truncate">{{ p.title }}</h3>
+              </div>
+              {% if p.is_archived %}
+                <span class="text-[10px] font-semibold uppercase tracking-wider bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full flex-shrink-0">{% t 'pl.archived' %}</span>
+              {% else %}
+                <div class="flex gap-1 flex-shrink-0">
+                  <a href="{% url 'planner:project_update' p.pk %}" class="p-1.5 rounded hover:bg-slate-100"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg></a>
+                  <form method="post" action="{% url 'planner:project_delete' p.pk %}" onsubmit="return confirm('{% t 'pl.delete_confirm' %}')">{% csrf_token %}
+                    <button class="p-1.5 rounded hover:bg-red-50"><svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg></button>
+                  </form>
+                </div>
+              {% endif %}
+            </div>
+            {% if p.description %}<p class="text-sm text-slate-500 mb-4 line-clamp-2">{{ p.description }}</p>{% endif %}
+            {% if p.progress is not None %}
+              <div class="mb-1 flex items-center justify-between text-xs">
+                <span class="text-slate-500">{% t 'pl.progress' %}</span><span class="font-semibold text-slate-700">{{ p.progress }}%</span>
+              </div>
+              <div class="h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+                <div class="h-full rounded-full" style="width: {{ p.progress }}%; background: {{ p.color }}"></div>
+              </div>
+            {% endif %}
+            <div class="flex items-center gap-3 text-xs text-slate-500">
+              <span>{% if p.scope.code == 'work' %}💼{% else %}📅{% endif %} {{ p.events_total }} {% t 'pl.items' %}</span>
+              {% if p.is_archived %}
+                <form method="post" action="{% url 'planner:project_archive' p.pk %}" class="ml-auto">{% csrf_token %}
+                  <button class="text-emerald-600 font-medium hover:underline">{% t 'pl.unarchive' %}</button>
+                </form>
+              {% else %}
+                <form method="post" action="{% url 'planner:project_archive' p.pk %}" class="ml-auto">{% csrf_token %}
+                  <button class="text-slate-400 hover:text-slate-600">{% t 'pl.archive' %}</button>
+                </form>
+              {% endif %}
+            </div>
+          </div>
+        {% empty %}
+          <div class="col-span-full bg-white border border-dashed border-slate-200 rounded-xl p-10 text-center">
+            <p class="text-sm text-slate-400 mb-3">{% t 'pl.projects_empty' %}</p>
+            <a href="{% url 'planner:project_create' %}" class="text-emerald-600 text-sm font-medium hover:underline">{% t 'pl.project_new' %} →</a>
+          </div>
+        {% endfor %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

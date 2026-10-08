@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'purchase.new' %}{% else %}{% t 'purchase.edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden" x-data="purchaseForm()">
+
+  {% include "partials/_sidebar.html" with active_page='vehicles' %}
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">{{ vehicle }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% if is_new %}{% t 'purchase.new' %}{% else %}{% t 'purchase.edit' %}{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="hidden sm:inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition">
+          {% t 'vehicle.cancel' %}
+        </a>
+        <button form="purchase-form" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% if is_new %}{% t 'purchase.add' %}{% else %}{% t 'purchase.save' %}{% endif %}
+        </button>
+      </div>
+    </header>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="px-4 lg:px-8 pt-4 max-w-5xl mx-auto w-full">
+          <div class="px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ message }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-5xl mx-auto">
+
+        <div class="sm:hidden mb-5">
+          <h1 class="text-2xl font-bold text-slate-900">{% if is_new %}{% t 'purchase.new' %}{% else %}{% t 'purchase.edit' %}{% endif %}</h1>
+          <p class="text-sm text-slate-500 mt-1">{{ vehicle }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 mb-5">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post" id="purchase-form" enctype="multipart/form-data" class="space-y-5" @submit="syncItems()">
+          {% csrf_token %}
+          {{ form.items_json }}
+          <input type="hidden" name="tab" id="form_tab" value="{{ tab }}">
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+            <!-- ============ ЛЕВАЯ КОЛОНКА: ФОРМА ============ -->
+            <div class="xl:col-span-2 space-y-5">
+
+              <!-- Блок 1: Основные данные -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+                    </svg>
+                  </span>
+                  {% t 'purchase.basic' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.vehicle.label }}</label>
+                    {{ form.vehicle }}
+                    {% for error in form.vehicle.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.purchase_date.label }}</label>
+                    {{ form.purchase_date }}
+                    {% for error in form.purchase_date.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.category.label }}</label>
+                    {{ form.category }}
+                    {% for error in form.category.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.title.label }}</label>
+                    {{ form.title }}
+                    {% for error in form.title.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 2: Сумма и пробег -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </span>
+                  {% t 'purchase.finance' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                      {{ form.amount.label }}
+                      <span class="text-slate-400 font-normal">· ₽</span>
+                    </label>
+                    {{ form.amount }}
+                    {% for error in form.amount.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                      {{ form.odometer.label }}
+                      <span class="text-slate-400 font-normal">· {% t 'cln.unit_km' %}</span>
+                    </label>
+                    {{ form.odometer }}
+                    {% for error in form.odometer.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 3: Товары -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                  </span>
+                  {% t 'purchase.items' %} <span class="text-slate-400 font-normal">({% t 'purchase.optional' %})</span>
+                </h2>
+
+                <div class="space-y-2">
+                  <template x-for="(item, i) in items" :key="i">
+                    <div class="flex items-center gap-2" :key="i">
+                      <input type="text" x-model="item.name" :placeholder="'{% t 'purchase.item_name' %}'"
+                             class="flex-1 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <input type="number" step="0.01" min="0" x-model="item.price" :placeholder="'₽'"
+                             class="w-20 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <span class="text-slate-400">×</span>
+                      <input type="number" step="1" min="1" x-model="item.qty" :placeholder="'1'"
+                             class="w-16 bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                      <button type="button" @click="removeItem(i)" class="p-2 text-slate-400 hover:text-red-500 rounded-lg hover:bg-red-50">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                      </button>
+                    </div>
+                  </template>
+                  <button type="button" @click="addItem()" class="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:text-blue-800 font-medium">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+                    {% t 'purchase.add_item' %}
+                  </button>
+                </div>
+              </div>
+
+              <!-- Блок 4: Фото и комментарий -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </span>
+                  {% t 'purchase.receipt_title' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'purchase.receipt' %} <span class="text-slate-400 font-normal">({% t 'purchase.optional' %})</span></label>
+                    {% if purchase and purchase.photo %}
+                    <div class="mb-2 bg-slate-50 rounded-xl p-2">
+                      <img src="{{ purchase.photo.url }}" class="w-24 h-16 object-contain rounded-lg" alt="">
+                    </div>
+                    {% endif %}
+                    <label class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-4 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30 block">
+                      <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                      </svg>
+                      <div class="text-sm font-medium text-slate-700">{% t 'purchase.receipt_hint' %}</div>
+                      <div class="text-xs text-slate-500 mt-1">{% t 'cln.image_hint' %}</div>
+                      {{ form.photo }}
+                    </label>
+                    {% for error in form.photo.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.description.label }} <span class="text-slate-400 font-normal">({% t 'fuel.optional' %})</span></label>
+                    {{ form.description }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Нижние кнопки (для мобильных) -->
+              <div class="flex flex-col sm:flex-row gap-2 sm:hidden">
+                <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg transition text-center">
+                  {% t 'vehicle.cancel' %}
+                </a>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+                  {% if is_new %}{% t 'purchase.add' %}{% else %}{% t 'purchase.edit' %}{% endif %}
+                </button>
+              </div>
+
+            </div>
+
+            <!-- ============ ПРАВАЯ КОЛОНКА: ИТОГИ ============ -->
+            <div class="xl:col-span-1 space-y-4">
+
+              <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white">
+                <div class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  <h3 class="font-semibold">{% t 'purchase.total' %}</h3>
+                </div>
+                <div class="text-4xl font-bold mb-1" x-text="amount ? Number(amount).toFixed(2) : '0.00'"></div>
+                <div class="text-sm text-emerald-100">₽</div>
+              </div>
+
+              <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <div class="flex gap-3">
+                  <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'purchase.tip' %}</div>
+                    <div>{% t 'purchase.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </form>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var __currentTab = '{{ tab|default:"purchase" }}';
+(function() { var el = document.getElementById('form_tab'); if (el && typeof __currentTab !== 'undefined') el.value = __currentTab; })();
+function purchaseForm() {
+  const hidden = document.getElementById("id_items_json");
+  let items = [];
+  try { items = JSON.parse(hidden.value || "[]"); } catch (e) { items = []; }
+  return {
+    amount: "{% if form.amount.value %}{{ form.amount.value|stringformat:'.2f' }}{% else %}''{% endif %}",
+    items: items,
+    addItem() {
+      this.items.push({ name: "", price: "", qty: 1 });
+    },
+    removeItem(i) {
+      this.items.splice(i, 1);
+    },
+    syncItems() {
+      hidden.value = JSON.stringify(
+        this.items.filter(function (it) { return (it.name || "").trim() !== ""; })
+      );
+    }
+  };
+}
+</script>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'pl.feed' %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% t 'pl.feed' as header_ttl %}
+    {% t 'pl.scope_personal' as crumb_p %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl header_crumb=crumb_p %}
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex gap-2 bg-slate-100 rounded-lg p-1 w-fit mb-6">
+          <a href="{% url 'planner:personal' %}" class="px-4 py-2 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900">{% t 'pl.calendar' %}</a>
+          <a href="{% url 'planner:feed' %}" class="px-4 py-2 text-sm font-medium rounded-md bg-white text-slate-900 shadow-sm">{% t 'pl.feed' %}</a>
+        </div>
+
+        <h2 class="text-lg font-bold text-slate-900 mb-3">{% t 'pl.upcoming' %}</h2>
+        <div class="space-y-2 mb-8">
+          {% for item in upcoming %}
+            <a href="{% url 'planner:event_update' item.event.pk %}" class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition">
+              <div class="w-12 text-center flex-shrink-0">
+                <div class="text-[10px] text-slate-500 uppercase">{{ item.start|date:"M" }}</div>
+                <div class="text-xl font-bold text-slate-900">{{ item.start|date:"d" }}</div>
+              </div>
+              <div class="flex-1 min-w-0 border-l-2 pl-3" style="border-color: {{ item.event.project.color|default:'#94A3B8' }}">
+                <div class="text-sm font-semibold text-slate-900 truncate">
+                  {% if item.recurring %}🔁 {% endif %}{{ item.event.title }}
+                </div>
+                <div class="text-xs text-slate-500">{{ item.start|date:"H:i" }}{% if item.event.location %} · 📍 {{ item.event.location }}{% endif %}{% if item.event.priority == 'urgent' %} · <span class="text-red-600 font-semibold">{% t 'pl.priority_urgent' %}</span>{% endif %}</div>
+              </div>
+              {% for tag in item.event.tags|slice:":2" %}<span class="hidden sm:inline text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded">{{ tag }}</span>{% endfor %}
+            </a>
+          {% empty %}
+            <div class="bg-white border border-dashed border-slate-200 rounded-xl p-8 text-center">
+              <p class="text-sm text-slate-400 mb-3">{% t 'pl.feed_empty' %}</p>
+              <a href="{% url 'planner:event_create' %}" class="inline-flex items-center gap-2 text-emerald-600 font-medium text-sm hover:underline">{% t 'pl.event_new' %} →</a>
+            </div>
+          {% endfor %}
+        </div>
+
+        <h2 class="text-lg font-bold text-slate-900 mb-3">{% t 'pl.past' %}</h2>
+        <div class="space-y-1">
+          {% for e in past %}
+            <a href="{% url 'planner:event_update' e.pk %}" class="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white transition text-sm">
+              <span class="text-xs text-slate-400 w-20 flex-shrink-0">{{ e.start_at|date:"d.m.Y" }}</span>
+              <span class="text-slate-600 truncate">{{ e.title }}</span>
+            </a>
+          {% empty %}
+            <p class="text-sm text-slate-400">—</p>
+          {% endfor %}
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

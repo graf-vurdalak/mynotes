@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'settings.sessions' %} — {% app_name %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='settings' %}
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div>
+          <div class="text-xs text-slate-500">{% t 'settings.lc' %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% t 'settings.title' %} · {% t 'settings.sessions' %}</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-6xl mx-auto p-4 lg:p-8">
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+          <aside class="lg:w-64 flex-shrink-0">
+            {% include "partials/_settings_menu.html" with settings_tab='sessions' %}
+          </aside>
+
+          <div class="flex-1 space-y-6">
+
+            <!-- Заголовок раздела -->
+            <div class="bg-white rounded-xl border border-slate-200 p-6">
+              <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+                <div>
+                  <h1 class="text-xl font-bold text-slate-900">{% t 'sessions.title' %}</h1>
+                  <p class="text-sm text-slate-500">{% t 'sessions.help' %}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Таблица входов -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide bg-slate-50 border-b border-slate-200">
+                      <th class="px-6 py-3">{% t 'sessions.col_date' %}</th>
+                      <th class="px-6 py-3">{% t 'sessions.col_provider' %}</th>
+                      <th class="px-6 py-3">{% t 'sessions.col_ip' %}</th>
+                      <th class="px-6 py-3">{% t 'sessions.col_ua' %}</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    {% for s in sessions %}
+                      <tr class="hover:bg-slate-50 transition">
+                        <td class="px-6 py-4 font-medium text-slate-900">{{ s.created_at|date:"d.m.Y H:i" }}</td>
+                        <td class="px-6 py-4">
+                          {% if s.provider == 'email' %}
+                            <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2 py-0.5 rounded-full">{% t 'sessions.provider.email' %}</span>
+                          {% elif s.provider == 'yandex' %}
+                            <span class="bg-red-100 text-red-700 text-xs font-semibold px-2 py-0.5 rounded-full">{% t 'sessions.provider.yandex' %}</span>
+                          {% else %}
+                            <span class="bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-full">{{ s.provider }}</span>
+                          {% endif %}
+                        </td>
+                        <td class="px-6 py-4 font-mono text-slate-600">{{ s.ip_address }}</td>
+                        <td class="px-6 py-4 text-slate-500 max-w-xs truncate" title="{{ s.user_agent }}">{{ s.user_agent|truncatechars:60 }}</td>
+                      </tr>
+                    {% empty %}
+                      <tr>
+                        <td colspan="4" class="px-6 py-10 text-center text-sm text-slate-500">{% t 'sessions.empty' %}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- Подсказка -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+              <div class="flex gap-3">
+                <svg class="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-sm text-blue-900">
+                  <div class="font-semibold mb-1">{% t 'sessions.warning_title' %}</div>
+                  <div class="text-blue-800">{% t 'sessions.warning_body' %}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

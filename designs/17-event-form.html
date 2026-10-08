@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Новое событие — Личное</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+  <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200">
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500"></div>
+      <div><div class="font-bold text-slate-900">Мои записи</div><div class="text-xs text-slate-500">v1.0</div></div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50">Дашборд</a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50">Бортжурнал</a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">Записная книжка</a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50">Отчёты</a>
+    </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+      <div class="flex items-center gap-3">
+        <a href="#" class="p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+          <div class="text-xs text-slate-500">Записная книжка · <a href="#" class="text-emerald-600 hover:underline">Личное</a> · Календарь</div>
+          <div class="text-sm font-semibold text-slate-900">Новое событие</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <form class="max-w-3xl mx-auto space-y-6">
+        <!-- Заголовок -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Заголовок <span class="text-red-500">*</span></label>
+          <input type="text" value="Встреча с дизайнером" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="О чём событие?">
+          <label class="block text-sm font-semibold text-slate-700 mt-4 mb-2">Описание</label>
+          <textarea rows="3" class="w-full px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent" placeholder="Детали, повестка, ссылки…"></textarea>
+        </div>
+
+        <!-- Дата/время + место -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Начало <span class="text-red-500">*</span></label>
+            <div class="flex gap-2">
+              <input type="date" value="2026-08-02" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+              <input type="time" value="15:00" class="w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+            </div>
+            <label class="inline-flex items-center gap-2 mt-2 text-sm text-slate-600">
+              <input type="checkbox" class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"> Весь день
+            </label>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Окончание</label>
+            <div class="flex gap-2">
+              <input type="date" value="2026-08-02" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+              <input type="time" value="16:00" class="w-28 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+            </div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Место</label>
+            <div class="relative">
+              <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/></svg>
+              <input type="text" value="Офис, переговорка №3" class="w-full pl-9 pr-4 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500" placeholder="Где проходит?">
+            </div>
+          </div>
+        </div>
+
+        <!-- Проект / приоритет / теги -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Проект</label>
+            <div class="flex gap-2">
+              <span class="w-2.5 h-2.5 rounded-full bg-purple-500 self-center flex-shrink-0"></span>
+              <select class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+                <option>— без проекта —</option>
+                <option selected>Ремонт квартиры</option>
+                <option>Семья</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Приоритет</label>
+            <div class="flex gap-2">
+              <button type="button" class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">Низкий</button>
+              <button type="button" class="flex-1 py-2 rounded-lg border-2 border-emerald-500 bg-emerald-50 text-sm font-semibold text-emerald-700">Обычный</button>
+              <button type="button" class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">Высокий</button>
+              <button type="button" class="flex-1 py-2 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">Срочный</button>
+            </div>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Теги</label>
+            <div class="flex flex-wrap items-center gap-2 p-2 border border-slate-200 rounded-lg">
+              <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-xs font-medium px-2 py-1 rounded">#дизайн <button class="text-slate-400 hover:text-slate-600">×</button></span>
+              <span class="inline-flex items-center gap-1 bg-slate-100 text-slate-700 text-xs font-medium px-2 py-1 rounded">#встреча <button class="text-slate-400 hover:text-slate-600">×</button></span>
+              <input type="text" class="flex-1 min-w-[8rem] px-2 py-1 text-sm border-0 focus:ring-0" placeholder="Добавьте тег и нажмите Enter…">
+            </div>
+          </div>
+        </div>
+
+        <!-- Повторение + напоминание -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Повторение</label>
+            <select class="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+              <option>Не повторяется</option>
+              <option>Ежедневно</option>
+              <option selected>Еженедельно</option>
+              <option>Ежемесячно</option>
+              <option>Ежегодно</option>
+              <option>По дням недели…</option>
+              <option>Произвольный интервал…</option>
+            </select>
+            <div class="mt-2 flex items-center gap-2">
+              <label class="text-xs text-slate-500">Повторять до:</label>
+              <input type="date" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm">
+              <label class="text-xs text-slate-500 ml-2">или</label>
+              <select class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm"><option selected>∞</option><option>3 раза</option><option>5 раз</option><option>10 раз</option></select>
+            </div>
+          </div>
+          <div>
+            <label class="block text-sm font-semibold text-slate-700 mb-2">Напоминание</label>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" checked class="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500">
+              <select class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm bg-white focus:ring-2 focus:ring-emerald-500">
+                <option>за 5 минут</option>
+                <option selected>за 30 минут (по умолчанию)</option>
+                <option>за 1 час</option>
+                <option>за 1 день</option>
+                <option>за 1 неделю</option>
+              </select>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">Значение «по умолчанию» берётся из настроек профиля, но можно задать индивидуально.</p>
+          </div>
+        </div>
+
+        <!-- Вложения -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <label class="block text-sm font-semibold text-slate-700 mb-2">Вложения</label>
+          <div class="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center hover:border-emerald-300 transition cursor-pointer">
+            <svg class="w-8 h-8 text-slate-300 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <div class="text-sm text-slate-600">Перетащите файлы или <span class="text-emerald-600 font-medium">выберите</span></div>
+            <div class="text-xs text-slate-400 mt-1">Любые файлы до 10 МБ</div>
+          </div>
+          <div class="flex gap-2 mt-3">
+            <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-sm">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+              <span class="text-slate-700">ТЗ_дизайн.pdf</span>
+              <span class="text-xs text-slate-400">1.2 МБ</span>
+              <button class="text-slate-400 hover:text-red-500 ml-1">×</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Действия -->
+        <div class="flex items-center justify-end gap-3 pb-8">
+          <a href="#" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">Отмена</a>
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow-md hover:shadow-lg transition">Сохранить событие</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

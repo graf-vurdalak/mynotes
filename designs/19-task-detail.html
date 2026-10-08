@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Карточка задачи — боковая панель</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<!-- Затемнённая доска на фоне -->
+<div class="fixed inset-0 bg-slate-900/40 z-40"></div>
+
+<!-- ============ БОКОВАЯ ПАНЕЛЬ (slide-over поверх Kanban) ============ -->
+<div class="fixed inset-y-0 right-0 z-50 w-full max-w-xl bg-white shadow-2xl flex flex-col">
+
+  <!-- Шапка -->
+  <div class="px-6 py-4 border-b border-slate-200 flex items-start justify-between gap-3">
+    <div class="flex-1 min-w-0">
+      <div class="text-xs text-slate-500 mb-1">Рабочее · Проект: <span class="text-blue-600 font-medium">Работа (бэкенд)</span></div>
+      <h2 class="text-lg font-bold text-slate-900">Исправление бага с авторизацией</h2>
+      <div class="flex flex-wrap items-center gap-2 mt-2">
+        <span class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 text-xs font-semibold px-2.5 py-1 rounded-full">
+          <span class="w-2 h-2 rounded-full bg-amber-500"></span> В работе
+        </span>
+        <span class="bg-red-100 text-red-700 text-xs font-semibold px-2.5 py-1 rounded-full">🔥 Срочный</span>
+        <span class="bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded">#backend</span>
+        <span class="bg-red-50 text-red-700 text-xs font-medium px-2 py-1 rounded">#bug</span>
+      </div>
+    </div>
+    <div class="flex items-center gap-1">
+      <button class="p-2 rounded-lg hover:bg-slate-100" title="Редактировать">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+      </button>
+      <button class="p-2 rounded-lg hover:bg-red-50" title="Удалить">
+        <svg class="w-5 h-5 text-slate-500 hover:text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+      </button>
+      <button class="p-2 rounded-lg hover:bg-slate-100" title="Закрыть">
+        <svg class="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Тело (скролл) -->
+  <div class="flex-1 overflow-y-auto">
+
+    <!-- Метрика -->
+    <div class="px-6 py-4 border-b border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-3 text-center">
+      <div class="bg-slate-50 rounded-lg p-2">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Создана</div>
+        <div class="text-sm font-semibold text-slate-800 mt-0.5">28 июл</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-2">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Дедлайн</div>
+        <div class="text-sm font-semibold text-red-600 mt-0.5">Сегодня</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-2">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Оценка</div>
+        <div class="text-sm font-semibold text-slate-800 mt-0.5">2 ч</div>
+      </div>
+      <div class="bg-slate-50 rounded-lg p-2">
+        <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold">Факт</div>
+        <div class="text-sm font-semibold text-slate-800 mt-0.5">1.5 ч</div>
+      </div>
+    </div>
+
+    <!-- Смена статуса -->
+    <div class="px-6 py-4 border-b border-slate-100">
+      <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Перевести в статус</label>
+      <div class="flex flex-wrap gap-2">
+        <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">🔘 Новый</button>
+        <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">🔵 Оценка</button>
+        <button class="px-3 py-1.5 rounded-lg border-2 border-amber-400 bg-amber-50 text-sm font-semibold text-amber-700">🟡 В работе</button>
+        <button class="px-3 py-1.5 rounded-lg border border-slate-200 text-sm text-slate-600 hover:bg-slate-50">🟠 Тестирование</button>
+        <button class="px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 text-sm font-semibold text-emerald-700 hover:bg-emerald-100">🟢 Готово</button>
+      </div>
+    </div>
+
+    <!-- Описание (Markdown) -->
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">Описание</h3>
+      <div class="text-sm text-slate-700 space-y-2">
+        <p>После обновления <code class="bg-slate-100 px-1 rounded font-mono text-xs">django-allauth</code> падает вход через Яндекс OAuth.</p>
+        <ul class="list-disc pl-5 space-y-1">
+          <li>Воспроизвести на dev</li>
+          <li>Проверить callback-URL и scope</li>
+          <li>Добавить регрессионный тест</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Комментарии -->
+    <div class="px-6 py-4 border-b border-slate-100">
+      <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">Комментарии · 3</h3>
+      <div class="space-y-4">
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">ИП</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-slate-900">Иван</span>
+              <span class="text-xs text-slate-400">29 июл, 14:20</span>
+            </div>
+            <div class="text-sm text-slate-700 mt-0.5">Похоже на изменение формата <code class="bg-slate-100 px-1 rounded font-mono text-xs">state</code> в новой версии.</div>
+          </div>
+        </div>
+        <div class="flex gap-3">
+          <div class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white text-xs font-semibold flex-shrink-0">ИП</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center gap-2">
+              <span class="text-sm font-semibold text-slate-900">Иван</span>
+              <span class="text-xs text-slate-400">30 июл, 09:05</span>
+            </div>
+            <div class="text-sm text-slate-700 mt-0.5">Лог ошибки во вложении.</div>
+            <div class="inline-flex items-center gap-2 mt-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs">
+              <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+              <span class="text-slate-700">oauth_error.log</span>
+              <span class="text-slate-400">34 КБ</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Форма добавления (HTMX: hx-post + hx-target список) -->
+      <div class="mt-4 flex gap-2">
+        <textarea rows="2" placeholder="Добавить комментарий… (Markdown)" class="flex-1 px-3 py-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none"></textarea>
+        <button class="self-end bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg px-4 py-2.5 transition" title="Отправить">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"/></svg>
+        </button>
+      </div>
+      <label class="inline-flex items-center gap-2 mt-2 text-xs text-slate-500 cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"/></svg>
+        Прикрепить файл (до 10 МБ)
+        <input type="file" class="hidden">
+      </label>
+    </div>
+
+    <!-- История статусов -->
+    <div class="px-6 py-4">
+      <h3 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">История изменений</h3>
+      <ol class="relative border-l border-slate-200 ml-2 space-y-4">
+        <li class="ml-4">
+          <span class="absolute -left-1.5 w-3 h-3 rounded-full bg-blue-400 ring-4 ring-white"></span>
+          <div class="text-sm text-slate-700"><b>Новый → Оценка</b></div>
+          <div class="text-xs text-slate-400">28 июл, 18:42 · Иван</div>
+        </li>
+        <li class="ml-4">
+          <span class="absolute -left-1.5 w-3 h-3 rounded-full bg-amber-400 ring-4 ring-white"></span>
+          <div class="text-sm text-slate-700"><b>Оценка → В работе</b></div>
+          <div class="text-xs text-slate-400">30 июл, 09:10 · Иван</div>
+        </li>
+      </ol>
+    </div>
+  </div>
+
+  <!-- Футер -->
+  <div class="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-between">
+    <div class="text-xs text-slate-400">Обновлена 30 июл, 09:10</div>
+    <a href="#" class="text-sm font-medium text-emerald-600 hover:text-emerald-700">Полная страница задачи →</a>
+  </div>
+</div>
+
+</body>
+</html>

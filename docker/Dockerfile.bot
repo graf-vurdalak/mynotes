@@ -1,0 +1,23 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# aiogram требует только aiohttp/aiosignal; libpq — на случай прямого доступа к БД не нужен.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libjpeg62-turbo libpng16-16 \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements/ ./requirements/
+RUN pip install --no-cache-dir -r requirements/bots.txt
+
+COPY . .
+
+# Локальный JSON/SQLite-стейт бота (конфигурация инсталляций, ТЗ 7.1/7.2)
+ENV BOT_STATE_DB=/data/state.db
+VOLUME ["/data"]
+
+# Команду задаёт docker-compose (python -m telegram_bots.vehicle_bot.main / .planner_bot.main)
+CMD ["python", "-m", "telegram_bots.vehicle_bot.main"]

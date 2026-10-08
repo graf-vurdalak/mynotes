@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Бортжурнал — Мои записи</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ============ САЙДБАР ============ -->
+  <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200">
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="font-bold text-slate-900">Мои записи</div>
+        <div class="text-xs text-slate-500">v1.0</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Дашборд
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+        </svg>
+        Бортжурнал
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        Записная книжка
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Отчёты
+      </a>
+    </nav>
+
+    <div class="border-t border-slate-100 p-3">
+      <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">ИП</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-slate-900 truncate">Иван Петров</div>
+          <div class="text-xs text-slate-500 truncate">ivan@example.com</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Верхняя панель -->
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+      <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+        <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+        </svg>
+      </button>
+      <div class="hidden md:flex items-center flex-1 max-w-md">
+        <div class="relative w-full">
+          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+          </svg>
+          <input type="text" placeholder="Поиск по бортжурналу..." class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent focus:bg-white transition">
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button class="relative p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+          </svg>
+          <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full"></span>
+        </button>
+        <div class="lg:hidden w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">ИП</div>
+      </div>
+    </header>
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <!-- Заголовок + действие -->
+      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
+            <a href="#" class="hover:text-slate-700">Главная</a>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-slate-900 font-medium">Бортжурнал</span>
+          </div>
+          <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">Мой автопарк</h1>
+          <p class="text-slate-500 mt-1">2 автомобиля · общий пробег 284 620 км</p>
+        </div>
+        <button class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+          Добавить авто
+        </button>
+      </div>
+
+      <!-- ============ ОБЩАЯ СТАТИСТИКА ============ -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Расходы за месяц</div>
+              <div class="text-lg font-bold text-slate-900">42 380 ₽</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Топливо за месяц</div>
+              <div class="text-lg font-bold text-slate-900">14 820 ₽</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Штрафы</div>
+              <div class="text-lg font-bold text-amber-600">1 неоплач.</div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-slate-200 p-4">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+              <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+              </svg>
+            </div>
+            <div>
+              <div class="text-xs text-slate-500">Страховки</div>
+              <div class="text-lg font-bold text-slate-900">1 скоро ист.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ СЕТКА КАРТОЧЕК АВТО ============ -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+        <!-- === АВТО 1 (активное, с уведомлением) === -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-blue-300 transition group">
+          
+          <!-- Верх карточки с фото -->
+          <div class="relative h-40 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+            <!-- Заглушка фото -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <svg class="w-24 h-24 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+              </svg>
+            </div>
+            
+            <!-- Бейдж "Активный" -->
+            <div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+              <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+              Активный
+            </div>
+            
+            <!-- Бейдж уведомления -->
+            <div class="absolute top-3 right-3 bg-amber-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+              </svg>
+              2 уведомления
+            </div>
+          </div>
+
+          <!-- Основная информация -->
+          <div class="p-5">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h3 class="text-xl font-bold text-slate-900">Toyota Camry</h3>
+                <p class="text-sm text-slate-500 mt-0.5">2021 · XV70 · Рестайлинг</p>
+              </div>
+              <button class="p-2 rounded-lg hover:bg-slate-100 transition">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Характеристики -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">Гос. номер</div>
+                <div class="text-sm font-semibold text-slate-900">А777АА 77</div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">Пробег</div>
+                <div class="text-sm font-semibold text-slate-900">156 420 км</div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">Топливо</div>
+                <div class="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                  Бензин АИ-95
+                </div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">КПП / привод</div>
+                <div class="text-sm font-semibold text-slate-900">АКПП · передний</div>
+              </div>
+            </div>
+
+            <!-- Уведомления -->
+            <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+              <div class="text-xs font-semibold text-amber-900 mb-2">⚠️ Требуют внимания</div>
+              <ul class="space-y-1 text-xs text-amber-800">
+                <li class="flex items-center gap-1.5">
+                  <span class="w-1 h-1 rounded-full bg-amber-500"></span>
+                  ОСАГО истекает через 12 дней
+                </li>
+                <li class="flex items-center gap-1.5">
+                  <span class="w-1 h-1 rounded-full bg-amber-500"></span>
+                  Неоплаченный штраф 500 ₽
+                </li>
+              </ul>
+            </div>
+
+            <!-- Кнопка -->
+            <a href="#" class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition group-hover:shadow-md">
+              Открыть бортжурнал
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- === АВТО 2 (без уведомлений) === -->
+        <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-blue-300 transition group">
+          
+          <div class="relative h-40 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+            <div class="absolute inset-0 flex items-center justify-center">
+              <svg class="w-24 h-24 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="p-5">
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h3 class="text-xl font-bold text-slate-900">Kia Rio</h3>
+                <p class="text-sm text-slate-500 mt-0.5">2018 · FB · Седан</p>
+              </div>
+              <button class="p-2 rounded-lg hover:bg-slate-100 transition">
+                <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3 mb-4">
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">Гос. номер</div>
+                <div class="text-sm font-semibold text-slate-900">В456ВВ 199</div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">Пробег</div>
+                <div class="text-sm font-semibold text-slate-900">128 200 км</div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">Топливо</div>
+                <div class="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                  Бензин АИ-92
+                </div>
+              </div>
+              <div class="bg-slate-50 rounded-lg p-3">
+                <div class="text-xs text-slate-500 mb-0.5">КПП / привод</div>
+                <div class="text-sm font-semibold text-slate-900">МКПП · передний</div>
+              </div>
+            </div>
+
+            <!-- Всё хорошо -->
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+              <div class="flex items-center gap-2 text-xs font-semibold text-emerald-900">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Всё в порядке — страховки и штрафы актуальны
+              </div>
+            </div>
+
+            <a href="#" class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition group-hover:shadow-md">
+              Открыть бортжурнал
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+              </svg>
+            </a>
+          </div>
+        </div>
+
+        <!-- === КАРТОЧКА "ДОБАВИТЬ АВТО" === -->
+        <div class="bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/30 transition cursor-pointer flex items-center justify-center min-h-[480px] group">
+          <div class="text-center p-8">
+            <div class="w-16 h-16 rounded-2xl bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center mx-auto mb-4 transition">
+              <svg class="w-8 h-8 text-slate-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+              </svg>
+            </div>
+            <div class="text-lg font-semibold text-slate-900 mb-1">Добавить автомобиль</div>
+            <div class="text-sm text-slate-500">Заполните марку, модель и характеристики</div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

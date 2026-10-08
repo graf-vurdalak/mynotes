@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'notif.inbox.title' %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='notifications' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+      <div>
+        <div class="text-xs text-slate-500">{% t 'notif.inbox.crumb' %}</div>
+        <div class="text-sm font-semibold text-slate-900">{% t 'notif.inbox.title' %}</div>
+      </div>
+      {% if only_unread %}
+        <a href="{% url 'notifications:inbox' %}" class="px-3 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">{% t 'notif.filter.all' %}</a>
+      {% elif notifications %}
+        <form method="post" hx-post="{% url 'notifications:mark_all_read' %}" hx-swap="none">
+          {% csrf_token %}
+          <button class="px-3 py-2 rounded-lg text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 transition">{% t 'notif.mark_all' %}</button>
+        </form>
+      {% endif %}
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div class="max-w-3xl mx-auto">
+        <div class="flex gap-2 mb-4">
+          <a href="{% url 'notifications:inbox' %}" class="px-3 py-1.5 rounded-full text-sm {% if not only_unread %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'notif.filter.all' %}</a>
+          <a href="{% url 'notifications:inbox' %}?filter=unread" class="px-3 py-1.5 rounded-full text-sm {% if only_unread %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'notif.filter.unread' %}</a>
+        </div>
+
+        {% if notifications %}
+          <div class="space-y-3" id="notif-list">
+            {% for n in notifications %}
+              {% include "notifications/partials/_row.html" with n=n %}
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="text-center py-16 text-slate-400 text-sm">{% t 'notif.empty' %}</div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

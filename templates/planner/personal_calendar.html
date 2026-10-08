@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'pl.scope_personal' %} — {% t 'pl.calendar' %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% t 'pl.calendar' as header_ttl %}
+    {% t 'pl.scope_personal' as crumb_p %}
+    {% t 'pl.event_new' as btn_new_label %}
+    {% url 'planner:event_create' as event_new_url %}
+    {% url 'reports:export_xlsx' 'events' as event_export_url %}
+    {% url 'reports:export_pdf' 'events' as event_pdf_url %}
+    {% t 'exp.excel' as btn_xlsx %}
+    {% t 'exp.pdf' as btn_pdf %}
+    {% with header_actions='<a href="'|add:event_export_url|add:'?scope=personal" class="inline-flex items-center gap-2 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition text-sm">'|add:btn_xlsx|add:'</a><a href="'|add:event_pdf_url|add:'?scope=personal" class="inline-flex items-center gap-2 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition text-sm">'|add:btn_pdf|add:'</a><a href="'|add:event_new_url|add:'" class="inline-flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md transition text-sm">'|add:btn_new_label|add:'</a>' %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl header_crumb=crumb_p %}
+    {% endwith %}
+
+    <!-- Панель: переключатель скоупа + навигация + вид -->
+    <div class="bg-white border-b border-slate-200 px-4 lg:px-8 py-4 flex-shrink-0">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex gap-2 bg-slate-100 rounded-lg p-1 w-full md:w-auto">
+          <a href="{% url 'planner:personal' %}" class="flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md bg-white text-slate-900 shadow-sm">📅 {% t 'pl.scope_personal' %}</a>
+          <a href="{% url 'planner:work' %}" class="flex-1 md:flex-none px-4 py-2 text-sm font-medium rounded-md text-slate-600 hover:text-slate-900 transition">💼 {% t 'pl.scope_work' %}</a>
+        </div>
+
+        <div class="flex items-center gap-2 flex-1 flex-wrap">
+          <div class="flex items-center gap-1">
+            <a href="?view={{ view }}&date={{ prev_date|date:'Y-m-d' }}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+              <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+            </a>
+            <a href="?view={{ view }}" class="px-3 py-1.5 text-sm font-medium text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition">{% t 'pl.today' %}</a>
+            <a href="?view={{ view }}&date={{ next_date|date:'Y-m-d' }}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+              <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+            <h2 class="text-lg font-bold text-slate-900 ml-2">{{ month_label }}</h2>
+          </div>
+          <div class="flex-1"></div>
+          <div class="flex gap-1 bg-slate-100 rounded-lg p-1">
+            <a href="?view=month&date={{ anchor|date:'Y-m-d' }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if view == 'month' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">{% t 'pl.view_month' %}</a>
+            <a href="?view=week&date={{ anchor|date:'Y-m-d' }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if view == 'week' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">{% t 'pl.view_week' %}</a>
+            <a href="?view=day&date={{ anchor|date:'Y-m-d' }}" class="px-3 py-1.5 text-sm font-medium rounded-md {% if view == 'day' %}bg-white text-slate-900 shadow-sm{% else %}text-slate-600 hover:text-slate-900{% endif %}">{% t 'pl.view_day' %}</a>
+          </div>
+          <a href="{% url 'planner:feed' %}" class="px-3 py-1.5 text-sm font-medium text-slate-600 hover:text-slate-900 border border-slate-200 rounded-lg">{% t 'pl.feed' %}</a>
+        </div>
+      </div>
+    </div>
+
+    <main class="flex-1 overflow-hidden flex flex-col lg:flex-row">
+      <!-- Календарь -->
+      <div class="flex-1 overflow-y-auto p-4 lg:p-6">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+          <div class="grid grid-cols-7 bg-slate-50 border-b border-slate-200">
+            {% for wd in weekdays %}<div class="py-3 text-center text-xs font-semibold {% if forloop.counter > 5 %}text-emerald-600{% else %}text-slate-500{% endif %} uppercase tracking-wider">{{ wd }}</div>{% endfor %}
+          </div>
+
+          <div class="calendar-grid">
+            {% for week in weeks %}
+              {% for cell in week %}
+                <a href="?view={{ view }}&date={{ anchor|date:'Y-m-d' }}&selected={{ cell.date|date:'Y-m-d' }}"
+                   class="calendar-day {% if view == 'day' and cell.date == selected %}!min-h-[200px]{% endif %} {% if cell.date.month != anchor.month and view == 'month' %}other-month{% endif %} {% if cell.date == today %}today{% endif %} {% if cell.date == selected %}selected{% endif %}">
+                  <div class="day-number text-xs mb-1 {% if cell.date == today %}bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center{% else %}text-slate-700{% endif %}">{{ cell.date.day }}</div>
+                  {% for item in cell.events|slice:":4" %}
+                    <span class="event-pill"
+                          style="background: {{ item.event.project.color|default:'#E2E8F0' }}22; color: {{ item.event.project.color|default:'#334155' }};">
+                      {% if item.recurring %}🔁{% endif %}{{ item.start|date:"H:i" }} {{ item.event.title }}
+                    </span>
+                  {% endfor %}
+                  {% if cell.events|length > 4 %}<div class="text-[10px] text-slate-400 pl-1">+{{ cell.events|length|add:"-4" }}</div>{% endif %}
+                </a>
+              {% endfor %}
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Правая колонка -->
+      <aside class="w-full lg:w-96 bg-white border-t lg:border-t-0 lg:border-l border-slate-200 overflow-y-auto flex-shrink-0">
+        <div class="p-5 border-b border-slate-100">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <div class="text-xs text-slate-500 uppercase tracking-wider font-semibold">{% t 'pl.selected_day' %}</div>
+              <div class="text-xl font-bold text-slate-900 mt-0.5">{{ selected|date:"l, j F" }}</div>
+            </div>
+            <a href="{{ event_new_url }}" class="p-2 rounded-lg hover:bg-slate-100 transition" title="{% t 'pl.event_new' %}">
+              <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
+            </a>
+          </div>
+          {% if selected_events %}
+            <div class="space-y-2">
+              {% for item in selected_events %}
+                <a href="{% url 'planner:event_update' item.event.pk %}?next={{ request.get_full_path|urlencode }}" class="flex gap-3 p-3 bg-slate-50 border border-slate-200 rounded-lg hover:shadow-sm transition">
+                  <div class="text-center flex-shrink-0 w-12">
+                    <div class="text-xs font-semibold text-slate-700">{{ item.start|date:"H:i" }}</div>
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full flex-shrink-0" style="background: {{ item.event.project.color|default:'#94A3B8' }}"></span>
+                      <div class="text-sm font-semibold text-slate-900 truncate">{{ item.event.title }}</div>
+                    </div>
+                    <div class="text-xs text-slate-500 mt-0.5">
+                      {% if item.recurring %}🔁 {% t 'pl.recurrence' %}{% endif %}
+                      {% if item.event.location %} · 📍 {{ item.event.location }}{% endif %}
+                    </div>
+                  </div>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="text-sm text-slate-400">{% t 'pl.day_empty' %}</p>
+          {% endif %}
+        </div>
+
+        <div class="p-5 border-b border-slate-100">
+          <h3 class="text-sm font-semibold text-slate-900 mb-3">{% t 'pl.upcoming' %}</h3>
+          <div class="space-y-2">
+            {% for item in upcoming %}
+              <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition">
+                <div class="w-10 text-center flex-shrink-0">
+                  <div class="text-[10px] text-slate-500 uppercase">{{ item.start|date:"M" }}</div>
+                  <div class="text-base font-bold text-slate-900">{{ item.start|date:"d" }}</div>
+                </div>
+                <div class="flex-1 min-w-0 border-l-2 pl-3" style="border-color: {{ item.event.project.color|default:'#94A3B8' }}">
+                  <div class="text-sm font-medium text-slate-900 truncate">{{ item.event.title }}</div>
+                  <div class="text-xs text-slate-500">{{ item.start|date:"H:i" }}{% if item.recurring %} · 🔁{% endif %}</div>
+                </div>
+              </div>
+            {% empty %}
+              <p class="text-sm text-slate-400">{% t 'pl.no_upcoming' %}</p>
+            {% endfor %}
+          </div>
+        </div>
+
+        <div class="p-5">
+          <h3 class="text-sm font-semibold text-slate-900 mb-3">{% t 'pl.projects' %}</h3>
+          <div class="space-y-2">
+            {% for p in categories %}
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full" style="background: {{ p.color }}"></span>
+                <a href="{% url 'planner:projects' %}" class="text-sm text-slate-700 hover:underline">{{ p.title }}</a>
+                <span class="ml-auto text-xs text-slate-400">{{ p.events_count }}</span>
+              </div>
+            {% empty %}
+              <p class="text-sm text-slate-400">{% t 'pl.projects_empty' %}</p>
+            {% endfor %}
+          </div>
+        </div>
+      </aside>
+    </main>
+  </div>
+</div>
+{% endblock %}

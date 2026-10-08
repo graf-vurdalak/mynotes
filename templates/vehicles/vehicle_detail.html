@@ -1,0 +1,1294 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{{ vehicle }}{% endblock %}
+
+{% block extra_css %}
+<style>[x-cloak] { display: none !important; }</style>
+{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='vehicles' %}
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="{% url 'vehicles:list' %}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">{% t 'nav.vehicles' %}</div>
+          <div class="text-sm font-semibold text-slate-900">{{ vehicle }}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="lg:hidden w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">{{ user.initials }}</div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto" x-data="tabManager('{{ active_tab|default:'fuel' }}')" x-init="init()">
+
+      <!-- ============ ШАПКА АВТО ============ -->
+      <div class="bg-white border-b border-slate-200">
+        <div class="px-4 lg:px-8 py-6">
+          <!-- Хлебные крошки -->
+          <nav class="flex items-center gap-2 text-sm text-slate-500 mb-4">
+            <a href="{% url 'core:dashboard' %}" class="hover:text-slate-700">{% t 'nav.dashboard' %}</a>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <a href="{% url 'vehicles:list' %}" class="hover:text-slate-700">{% t 'nav.vehicles' %}</a>
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            <span class="text-slate-900 font-medium">{{ vehicle }}</span>
+          </nav>
+
+          <div class="flex flex-col lg:flex-row lg:items-center gap-6">
+            <!-- Фото / иконка -->
+            <div class="w-24 h-24 rounded-2xl bg-gradient-to-br from-blue-50 to-blue-100 flex items-center justify-center flex-shrink-0 border border-blue-200 overflow-hidden">
+              {% if vehicle.photo %}
+                <img src="{{ vehicle.photo.url }}" alt="{{ vehicle }}" class="w-full h-full object-cover">
+              {% else %}
+                <svg class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h4m-4 0H9m10 0v-6a1 1 0 00-1-1h-2" />
+                </svg>
+              {% endif %}
+            </div>
+
+            <!-- Информация -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-3 mb-2">
+                <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">{{ vehicle }}</h1>
+                {% if vehicle.is_default %}
+                <span class="bg-blue-100 text-blue-700 text-xs font-semibold px-2.5 py-1 rounded-full">{% t 'vehicle.active' %}</span>
+                {% endif %}
+              </div>
+              <p class="text-slate-500 mb-3">{{ vehicle.year|default:"—" }}{% if vehicle.engine_volume %} · {{ vehicle.engine_volume|floatformat }} л{% endif %}</p>
+
+              <!-- Быстрые характеристики -->
+              <div class="flex flex-wrap gap-2">
+                {% if vehicle.license_plate %}
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 20l4-16m2 16l4-16M6 9h14M4 15h14"/></svg>
+                  {{ vehicle.license_plate }}
+                </span>
+                {% endif %}
+                {% if vehicle.engine_volume or vehicle.power_hp %}
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  {{ vehicle.engine_volume|floatformat }}{% if vehicle.power_hp %} · {{ vehicle.power_hp }} л.с.{% endif %}
+                </span>
+                {% endif %}
+                {% if vehicle.get_transmission_display %}
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  {{ vehicle.get_transmission_display }}
+                </span>
+                {% endif %}
+                {% if vehicle.get_fuel_type_display %}
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  {{ vehicle.get_fuel_type_display }}
+                </span>
+                {% endif %}
+                {% if vehicle.get_drive_type_display %}
+                <span class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-medium px-2.5 py-1 rounded-lg">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+                  {{ vehicle.get_drive_type_display }}
+                </span>
+                {% endif %}
+              </div>
+            </div>
+
+            <!-- Кнопки действий -->
+            <div class="flex gap-2 flex-shrink-0">
+              <a href="{% url 'vehicles:update' vehicle.pk %}" class="inline-flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 hover:bg-slate-50 text-slate-700 font-medium px-4 py-2 rounded-lg transition">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                {% t 'vehicle.edit' %}
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- ============ ТАБЫ ============ -->
+        <div class="px-4 lg:px-8">
+          <div class="flex gap-1 overflow-x-auto scrollbar-hide border-b border-slate-200 -mb-px">
+            <button type="button"
+                    @click="switchTab('fuel')"
+                    :class="tab==='fuel' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              {% t 'vehicle.fuel' %}
+              <span class="bg-slate-100 text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{{ tab_counts.fuel }}</span>
+            </button>
+            <button type="button"
+                    @click="switchTab('purchase')"
+                    :class="tab==='purchase' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+              {% t 'vehicle.purchase' %}
+              <span class="bg-slate-100 text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{{ tab_counts.purchase }}</span>
+            </button>
+            <button type="button"
+                    @click="switchTab('service')"
+                    :class="tab==='service' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+              {% t 'vehicle.service' %}
+              <span class="bg-slate-100 text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{{ tab_counts.service }}</span>
+            </button>
+            <button type="button"
+                    @click="switchTab('fines')"
+                    :class="tab==='fines' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+              {% t 'vehicle.fines' %}
+              <span class="bg-slate-100 text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{{ tab_counts.fines }}</span>
+            </button>
+            <button type="button"
+                    @click="switchTab('insurance')"
+                    :class="tab==='insurance' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+              {% t 'vehicle.insurance' %}
+              <span class="bg-slate-100 text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{{ tab_counts.insurance }}</span>
+            </button>
+            <button type="button"
+                    @click="switchTab('planned')"
+                    :class="tab==='planned' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+              {% t 'vehicle.planned' %}
+              <span class="bg-slate-100 text-slate-600 text-xs font-bold px-1.5 py-0.5 rounded-full">{{ tab_counts.planned }}</span>
+            </button>
+            <button type="button"
+                    @click="switchTab('stats')"
+                    :class="tab==='stats' ? 'text-blue-600 border-blue-600 font-semibold' : 'text-slate-600 hover:text-slate-900 font-medium border-transparent'"
+                    class="flex items-center gap-2 px-4 py-3 text-sm border-b-2 whitespace-nowrap transition">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+              {% t 'vehicle.stats' %}
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ КОНТЕНТ ТАБОВ (каркас) ============ -->
+      <div class="p-4 lg:p-8">
+        <div class="max-w-6xl mx-auto">
+
+          {% if messages %}
+            {% for message in messages %}
+              <div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ message }}</div>
+            {% endfor %}
+          {% endif %}
+
+          <!-- Заправки -->
+          <section x-show="tab==='fuel'" x-cloak data-tab="fuel">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+              <!-- Левая колонка: список -->
+              <div class="xl:col-span-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div class="flex items-center gap-2">
+                    <form method="get" action="{% url 'vehicles:detail' vehicle.pk %}" class="flex items-center gap-2">
+                      <select name="station" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">{% t 'fuel.all_stations' %}</option>
+                        {% for s in fuel_station_options %}
+                        <option value="{{ s.name }}" {% if fuel_station_filter == s.name %}selected{% endif %}>{{ s.name }}</option>
+                        {% endfor %}
+                      </select>
+                      {% if fuel_station_filter %}<a href="{% url 'vehicles:detail' vehicle.pk %}" class="text-xs text-slate-500 hover:text-blue-600">✕</a>{% endif %}
+                    </form>
+                    <a href="{% url 'reports:export_xlsx' 'fuel' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.excel' %}</a>
+                    <a href="{% url 'reports:export_pdf' 'fuel' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.pdf' %}</a>
+                  </div>
+                  <a href="{% url 'vehicles:fuel_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    {% t 'fuel.add' %}
+                  </a>
+                </div>
+
+                {% if fuel_entries %}
+                <div class="space-y-3">
+                  {% for e in fuel_entries %}
+                  <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition">
+                    <div class="flex items-start gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center flex-shrink-0 text-white font-bold text-lg">
+                        {% if e.station %}{{ e.station.name|first|upper }}{% elif e.station_custom_name %}{{ e.station_custom_name|first|upper }}{% else %}А{% endif %}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                              <h3 class="font-semibold text-slate-900">
+                                {% if e.station %}{{ e.station.name }}{% elif e.station_custom_name %}{{ e.station_custom_name }}{% else %}{% t 'fuel.custom' %}{% endif %}
+                              </h3>
+                              {% if e.fuel_type %}<span class="bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded">{{ e.get_fuel_type_display|default:e.fuel_type }}</span>{% endif %}
+                              {% if e.full_tank %}
+                              <span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <svg class="w-3 h-3" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/></svg>
+                                {% t 'fuel.full_tank' %}
+                              </span>
+                              {% endif %}
+                              {% if e.consumption %}
+                              <span class="bg-indigo-50 text-indigo-700 text-xs font-medium px-2 py-0.5 rounded-full">{{ e.consumption }} л/100 км</span>
+                              {% endif %}
+                            </div>
+                            {% if e.station and e.station.address %}<p class="text-xs text-slate-500 mt-0.5">{{ e.station.address }}</p>{% endif %}
+                            {% if e.notes %}<p class="text-xs text-slate-500 mt-0.5">{{ e.notes|truncatechars:120 }}</p>{% endif %}
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-lg font-bold text-slate-900">{{ e.total_cost }} ₽</div>
+                            {% if e.volume_liters and e.price_per_liter %}
+                            <div class="text-xs text-slate-500">{{ e.price_per_liter }} ₽/л × {{ e.volume_liters|floatformat }} л</div>
+                            {% endif %}
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-500">
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ e.fuel_date|date:"d.m.Y" }}
+                          </span>
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                            {% t 'vehicle.mileage' %}: {{ e.odometer }} км
+                          </span>
+                          {% if e.receipt_photo %}
+                          <span class="inline-flex items-center gap-1 text-slate-500">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {% t 'fuel.receipt' %}
+                          </span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 justify-end">
+                      <a href="{% url 'vehicles:fuel_update' vehicle.pk e.pk %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {% t 'fuel.edit' %}
+                      </a>
+                      <form method="post" action="{% url 'vehicles:fuel_delete' vehicle.pk e.pk %}" onsubmit="return confirm('{% t 'fuel.delete_confirm' %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50 transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          {% t 'vehicle.delete' %}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                  <div class="w-16 h-16 rounded-2xl bg-blue-50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                  </div>
+                  <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.tab_empty' %}</div>
+                  <div class="text-sm text-slate-500 mb-5">{% t 'fuel.empty_hint' %}</div>
+                  <a href="{% url 'vehicles:fuel_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition">
+                    {% t 'fuel.add' %}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Правая колонка: статистика -->
+              <div class="xl:col-span-1 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                  <h3 class="text-sm font-semibold text-slate-900 mb-3">{% t 'fuel.cons_title' %} <span class="text-xs font-normal text-slate-400">· 6 {% t 'fuel.months' %}</span></h3>
+                  {% if fuel_history %}
+                  <div class="h-32 flex items-end gap-1.5">
+                    {% for m in fuel_history %}
+                    <div class="flex-1 rounded-t bg-blue-500 hover:bg-blue-600 transition" style="height: {{ m.consumption|floatformat:0 }}%"></div>
+                    {% endfor %}
+                  </div>
+                  <div class="flex justify-between text-xs text-slate-400 mt-2">
+                    {% for m in fuel_history %}<span>{{ m.month|slice:"5:7" }}</span>{% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="text-sm text-slate-500 text-center py-6">{% t 'fuel.no_data' %}</div>
+                  {% endif %}
+                  <div class="mt-3 pt-3 border-t border-slate-100">
+                    <div class="text-xs text-slate-500">{% t 'fuel.cons_avg' %}</div>
+                    <div class="text-xl font-bold text-slate-900">{% if fuel_all.avg_consumption %}{{ fuel_all.avg_consumption }}{% else %}—{% endif %} <span class="text-sm font-normal text-slate-500">л/100 км</span></div>
+                  </div>
+                </div>
+
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">{% t 'fuel.this_month' %}</h3>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fuel.spent' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ fuel_month.total_cost }} ₽</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fuel.refueled' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ fuel_month.total_liters|floatformat }} л</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fuel.cost_km' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{% if fuel_month.cost_per_km %}{{ fuel_month.cost_per_km }} ₽{% else %}—{% endif %}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fuel.avg_price' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{% if fuel_month.avg_price %}{{ fuel_month.avg_price }} ₽{% else %}—{% endif %}</span>
+                  </div>
+                </div>
+
+                {% if last_fuel_entry %}
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl border border-blue-200 p-5">
+                  <div class="text-xs font-semibold text-blue-700 uppercase tracking-wider mb-2">{% t 'fuel.last' %}</div>
+                  <div class="text-lg font-bold text-slate-900 mb-1">{% if last_fuel_entry.station %}{{ last_fuel_entry.station.name }}{% else %}{% t 'fuel.custom' %}{% endif %}</div>
+                  <div class="text-sm text-slate-600 mb-3">{{ last_fuel_entry.fuel_date|date:"d.m.Y" }}</div>
+                  <div class="grid grid-cols-2 gap-2 text-sm">
+                    <div><div class="text-xs text-slate-500">{% t 'fuel.liters_short' %}</div><div class="font-semibold text-slate-900">{{ last_fuel_entry.volume_liters|floatformat }} л</div></div>
+                    <div><div class="text-xs text-slate-500">{% t 'fuel.total' %}</div><div class="font-semibold text-slate-900">{{ last_fuel_entry.total_cost }} ₽</div></div>
+                  </div>
+                </div>
+                {% endif %}
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Покупки -->
+          <section x-show="tab==='purchase'" x-cloak data-tab="purchase">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+              <!-- Левая колонка: список -->
+              <div class="xl:col-span-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <form method="get" action="{% url 'vehicles:detail' vehicle.pk %}" class="flex items-center gap-2 flex-wrap">
+                      <select name="purchase_cat" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">{% t 'purchase.all_categories' %}</option>
+                        {% for c in purchase_cat_options %}
+                        <option value="{{ c.id }}" {% if purchase_cat_filter|stringformat:"s" == c.id|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>
+                        {% endfor %}
+                      </select>
+                      {% if purchase_cat_filter %}<a href="{% url 'vehicles:detail' vehicle.pk %}" class="text-xs text-slate-500 hover:text-blue-600">✕</a>{% endif %}
+                    </form>
+                    <a href="{% url 'reports:export_xlsx' 'purchases' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.excel' %}</a>
+                    <a href="{% url 'reports:export_pdf' 'purchases' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.pdf' %}</a>
+                  </div>
+                  <a href="{% url 'vehicles:purchase_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    {% t 'purchase.add' %}
+                  </a>
+                </div>
+
+                {% if purchases %}
+                <div class="space-y-3">
+                  {% for p in purchases %}
+                  <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition">
+                    <div class="flex items-start gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-slate-100 flex items-center justify-center flex-shrink-0">
+                        {% if p.category and p.category.icon %}
+                        <span class="text-lg">{{ p.category.icon }}</span>
+                        {% else %}
+                        <svg class="w-6 h-6 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/></svg>
+                        {% endif %}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                              <h3 class="font-semibold text-slate-900">{{ p.title }}</h3>
+                              {% if p.category %}
+                              <span class="bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded">{{ p.category.name }}</span>
+                              {% endif %}
+                            </div>
+                            {% if p.description %}<p class="text-xs text-slate-500 mt-0.5">{{ p.description|truncatechars:120 }}</p>{% endif %}
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-lg font-bold text-slate-900">{{ p.amount }} ₽</div>
+                            {% if p.odometer %}<div class="text-xs text-slate-500">{% t 'vehicle.mileage' %} {{ p.odometer }} км</div>{% endif %}
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-500">
+                          {% if p.purchase_date %}
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ p.purchase_date|date:"d.m.Y" }}
+                          </span>
+                          {% endif %}
+                          {% if p.items %}
+                          <span class="flex items-center gap-1">{{ p.items|length }} {% t 'purchase.items' %}</span>
+                          {% endif %}
+                          {% if p.photo %}
+                          <span class="inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {% t 'purchase.receipt' %}
+                          </span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 justify-end">
+                      <a href="{% url 'vehicles:purchase_update' vehicle.pk p.pk %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {% t 'purchase.edit' %}
+                      </a>
+                      <form method="post" action="{% url 'vehicles:purchase_delete' vehicle.pk p.pk %}" onsubmit="return confirm('{% t 'purchase.delete_confirm' %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50 transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          {% t 'vehicle.delete' %}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                  <div class="w-16 h-16 rounded-2xl bg-emerald-50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  </div>
+                  <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.tab_empty' %}</div>
+                  <div class="text-sm text-slate-500 mb-5">{% t 'purchase.empty_hint' %}</div>
+                  <a href="{% url 'vehicles:purchase_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition">
+                    {% t 'purchase.add' %}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Правая колонка: итоги -->
+              <div class="xl:col-span-1 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">{% t 'purchase.this_month' %}</h3>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'purchase.spent' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ purchase_month.total }} ₽</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'purchase.total_count' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ purchase_month.count }}</span>
+                  </div>
+                  {% if purchase_month.by_category %}
+                  <div class="pt-3 border-t border-slate-100">
+                    <div class="text-xs text-slate-500 mb-2">{% t 'purchase.by_category' %}</div>
+                    <div class="space-y-2">
+                      {% for c in purchase_month.by_category %}
+                      <div>
+                        <div class="flex justify-between text-xs mb-1">
+                          <span class="text-slate-600">{{ c.name }}</span>
+                          <span class="text-slate-900 font-medium">{{ c.total }} ₽</span>
+                        </div>
+                        <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                          <div class="h-full rounded-full" style="width: {% widthratio c.total purchase_month.total 100 %}%; background-color: {{ c.color }}"></div>
+                        </div>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'purchase.tip' %}</div>
+                    <div>{% t 'purchase.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Сервис -->
+          <section x-show="tab==='service'" x-cloak data-tab="service">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+              <!-- Левая колонка: список -->
+              <div class="xl:col-span-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <a href="{% url 'reports:export_xlsx' 'services' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.excel' %}</a>
+                    <a href="{% url 'reports:export_pdf' 'services' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.pdf' %}</a>
+                  </div>
+                  <a href="{% url 'vehicles:service_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    {% t 'service.add' %}
+                  </a>
+                </div>
+
+                {% if service_records %}
+                <div class="space-y-3">
+                  {% for s in service_records %}
+                  <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-purple-300 hover:shadow-sm transition">
+                    <div class="flex items-start gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <div>
+                            <h3 class="font-semibold text-slate-900">{% if s.work_description %}{{ s.work_description }}{% else %}{% t 'service.work_default' %}{% endif %}</h3>
+                            {% if s.service_station %}<p class="text-xs text-slate-500 mt-0.5">{{ s.service_station }}</p>{% endif %}
+                            {% if s.order_document %}<p class="text-xs text-slate-500 mt-0.5">{% t 'service.order_doc' %} № {{ s.order_document }}</p>{% endif %}
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-lg font-bold text-slate-900">{{ s.amount }} ₽</div>
+                            {% if s.odometer %}<div class="text-xs text-slate-500">{% t 'vehicle.mileage' %} {{ s.odometer }} {% t 'service.km' %}</div>{% endif %}
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-500">
+                          {% if s.service_date %}
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ s.service_date|date:"d.m.Y" }}
+                          </span>
+                          {% endif %}
+                          {% if s.photos.all %}
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {{ s.photos.all|length }} {% t 'service.photos' %}
+                          </span>
+                          {% endif %}
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 justify-end">
+                      <a href="{% url 'vehicles:service_update' vehicle.pk s.pk %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {% t 'service.edit' %}
+                      </a>
+                      <form method="post" action="{% url 'vehicles:service_delete' vehicle.pk s.pk %}" onsubmit="return confirm('{% t 'service.delete_confirm' %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50 transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          {% t 'vehicle.delete' %}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                  <div class="w-16 h-16 rounded-2xl bg-purple-50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/></svg>
+                  </div>
+                  <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.tab_empty' %}</div>
+                  <div class="text-sm text-slate-500 mb-5">{% t 'service.empty_hint' %}</div>
+                  <a href="{% url 'vehicles:service_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition">
+                    {% t 'service.add' %}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Правая колонка: итоги -->
+              <div class="xl:col-span-1 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">{% t 'service.this_year' %}</h3>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'service.spent' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ service_year.total }} ₽</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'service.total_count' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ service_year.count }}</span>
+                  </div>
+                  {% if service_year.items %}
+                  <div class="pt-3 border-t border-slate-100">
+                    <div class="text-xs text-slate-500 mb-2">{% t 'service.last_works' %}</div>
+                    <ul class="space-y-2 text-sm">
+                      {% for s in service_year.items %}
+                      <li class="flex justify-between"><span class="text-slate-600 truncate">{{ s.work_description|truncatechars:24 }}</span><span class="text-slate-900 font-medium flex-shrink-0">{{ s.amount }} ₽</span></li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'service.tip' %}</div>
+                    <div>{% t 'service.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Штрафы -->
+          <section x-show="tab==='fines'" x-cloak data-tab="fines">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+              <!-- Левая колонка: список -->
+              <div class="xl:col-span-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <form method="get" action="{% url 'vehicles:detail' vehicle.pk %}" class="flex items-center gap-2 flex-wrap">
+                      <select name="fine_status" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">{% t 'fine.all_statuses' %}</option>
+                        <option value="unpaid" {% if fine_status_filter == 'unpaid' %}selected{% endif %}>{% t 'fine.unpaid' %}</option>
+                        <option value="paid" {% if fine_status_filter == 'paid' %}selected{% endif %}>{% t 'fine.paid' %}</option>
+                        <option value="disputed" {% if fine_status_filter == 'disputed' %}selected{% endif %}>{% t 'fine.disputed' %}</option>
+                      </select>
+                      {% if fine_status_filter %}<a href="{% url 'vehicles:detail' vehicle.pk %}" class="text-xs text-slate-500 hover:text-blue-600">✕</a>{% endif %}
+                    </form>
+                    <a href="{% url 'reports:export_xlsx' 'fines' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.excel' %}</a>
+                    <a href="{% url 'reports:export_pdf' 'fines' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.pdf' %}</a>
+                  </div>
+                  <a href="{% url 'vehicles:fine_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    {% t 'fine.add' %}
+                  </a>
+                </div>
+
+                {% if fines %}
+                <div class="space-y-3">
+                  {% for f in fines %}
+                  <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-amber-300 hover:shadow-sm transition">
+                    <div class="flex items-start gap-4">
+                      <div class="w-12 h-12 rounded-xl {% if f.status == 'paid' %}bg-emerald-50{% elif f.status == 'disputed' %}bg-amber-50{% else %}bg-red-50{% endif %} flex items-center justify-center flex-shrink-0">
+                        {% if f.status == 'paid' %}
+                        <svg class="w-6 h-6 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                        {% else %}
+                        <svg class="w-6 h-6 {% if f.status == 'disputed' %}text-amber-500{% else %}text-red-500{% endif %}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                        {% endif %}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                              <h3 class="font-semibold text-slate-900">{% if f.description %}{{ f.description }}{% else %}{% if f.article %}ст. {{ f.article }}{% else %}—{% endif %}{% endif %}</h3>
+                              <span class="{% if f.status == 'paid' %}bg-emerald-50 text-emerald-700{% elif f.status == 'disputed' %}bg-amber-50 text-amber-700{% else %}bg-red-50 text-red-700{% endif %} text-xs font-medium px-2 py-0.5 rounded">{{ f.get_status_display }}</span>
+                            </div>
+                            {% if f.decision_number or f.article %}
+                            <p class="text-xs text-slate-500 mt-0.5">{% if f.article %}ст. {{ f.article }}{% endif %}{% if f.article and f.decision_number %} · {% endif %}{% if f.decision_number %}УИН {{ f.decision_number }}{% endif %}</p>
+                            {% endif %}
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-lg font-bold {% if f.status == 'paid' %}text-slate-900{% else %}text-red-600{% endif %}">{{ f.amount }} ₽</div>
+                            <div class="text-xs text-slate-500">{% t 'fine.issued' %} {{ f.fine_date|date:"d.m.Y" }}{% if f.status == 'paid' and f.paid_at %} · {% t 'fine.paid_on' %} {{ f.paid_at|date:"d.m.Y" }}{% endif %}</div>
+                          </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4 mt-3 text-xs text-slate-500">
+                          {% if f.photo %}
+                          <span class="inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {% t 'fine.photo' %}
+                          </span>
+                          {% endif %}
+                          {% if f.purchase %}
+                          <span class="inline-flex items-center gap-1 text-emerald-600">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                            {% t 'fine.in_expenses' %}
+                          </span>
+                          {% endif %}
+                          <form method="post" action="{% url 'vehicles:fine_status' vehicle.pk f.pk %}">
+                            {% csrf_token %}
+                            <select name="status" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                              <option value="unpaid" {% if f.status == 'unpaid' %}selected{% endif %}>{% t 'fine.unpaid' %}</option>
+                              <option value="paid" {% if f.status == 'paid' %}selected{% endif %}>{% t 'fine.paid' %}</option>
+                              <option value="disputed" {% if f.status == 'disputed' %}selected{% endif %}>{% t 'fine.disputed' %}</option>
+                            </select>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 justify-end">
+                      <a href="{% url 'vehicles:fine_update' vehicle.pk f.pk %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {% t 'fine.edit' %}
+                      </a>
+                      <form method="post" action="{% url 'vehicles:fine_delete' vehicle.pk f.pk %}" onsubmit="return confirm('{% t 'fine.delete_confirm' %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50 transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          {% t 'vehicle.delete' %}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                  <div class="w-16 h-16 rounded-2xl bg-amber-50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                  </div>
+                  <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.tab_empty' %}</div>
+                  <div class="text-sm text-slate-500 mb-5">{% t 'fine.empty_hint' %}</div>
+                  <a href="{% url 'vehicles:fine_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition">
+                    {% t 'fine.add' %}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Правая колонка: итоги -->
+              <div class="xl:col-span-1 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">{% t 'fine.summary' %}</h3>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fine.unpaid_sum' %}</span>
+                    <span class="text-sm font-bold text-red-600">{{ fine_all.unpaid }} ₽</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fine.paid_sum' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ fine_all.paid }} ₽</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'fine.total_year' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ fine_year.total }} ₽</span>
+                  </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'fine.tip' %}</div>
+                    <div>{% t 'fine.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Страховки -->
+          <section x-show="tab==='insurance'" x-cloak data-tab="insurance">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+              <!-- Левая колонка: список -->
+              <div class="xl:col-span-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
+                  <div class="bg-white rounded-xl border border-slate-200 p-4">
+                    <div class="text-xs text-slate-500 mb-1">{% t 'insurance.active_policies' %}</div>
+                    <div class="text-xl font-bold text-slate-900">{{ insurance_summary.active }}</div>
+                  </div>
+                  <div class="bg-white rounded-xl border border-slate-200 p-4">
+                    <div class="text-xs text-slate-500 mb-1">{% t 'insurance.expiring_soon' %}</div>
+                    <div class="text-xl font-bold {% if insurance_summary.expiring %}text-amber-600{% else %}text-slate-900{% endif %}">{{ insurance_summary.expiring }}</div>
+                  </div>
+                  <div class="bg-white rounded-xl border border-slate-200 p-4">
+                    <div class="text-xs text-slate-500 mb-1">{% t 'insurance.year_cost' %}</div>
+                    <div class="text-xl font-bold text-slate-900">{{ insurance_summary.yearly }} ₽</div>
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <a href="{% url 'reports:export_xlsx' 'insurances' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.excel' %}</a>
+                    <a href="{% url 'reports:export_pdf' 'insurances' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.pdf' %}</a>
+                  </div>
+                  <a href="{% url 'vehicles:insurance_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    {% t 'insurance.add' %}
+                  </a>
+                </div>
+
+                {% if insurances %}
+                <div class="space-y-3">
+                  {% for i in insurances %}
+                  <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition">
+                    <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center flex-shrink-0">
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                      </div>
+
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center gap-2 flex-wrap">
+                          <h3 class="font-semibold text-slate-900">{{ i.get_insurance_type_display }}</h3>
+                          {% if i.renewed_by %}
+                          <span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'insurance.badge_renewed' %}</span>
+                          {% elif i.end_date and i.end_date >= today and i.end_date <= insurance_deadline %}
+                          <span class="bg-amber-50 text-amber-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'insurance.badge_expiring' %} {{ i.end_date|timeuntil }}</span>
+                          {% elif i.end_date and i.end_date < today %}
+                          <span class="bg-red-50 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'insurance.badge_expired' %}</span>
+                          {% else %}
+                          <span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'insurance.badge_active' %}</span>
+                          {% endif %}
+                        </div>
+                        <p class="text-xs text-slate-500 mt-0.5">{% if i.company %}{{ i.company }} · {% endif %}{% t 'insurance.policy' %} {{ i.policy_number }}</p>
+                        <div class="flex flex-wrap items-center gap-4 mt-2 text-xs text-slate-500">
+                          {% if i.start_date and i.end_date %}
+                          <span class="inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {% t 'insurance.valid_from' %} {{ i.start_date|date:"d.m.Y" }} {% t 'insurance.valid_until' %} {{ i.end_date|date:"d.m.Y" }}
+                          </span>
+                          {% endif %}
+                          {% if i.reminder_created %}
+                          <span class="inline-flex items-center gap-1 text-amber-600">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21a2 2 0 11-14 0 7 7 0 0114 0z"/></svg>
+                            {% t 'insurance.reminder_enabled' %}
+                          </span>
+                          {% endif %}
+                          {% if i.renewed_by %}
+                          <span class="inline-flex items-center gap-1 text-emerald-600">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                            {% t 'insurance.renewed_by' %} <a href="{% url 'vehicles:insurance_update' vehicle.pk i.renewed_by.pk %}" class="underline hover:text-emerald-700">{{ i.renewed_by.get_insurance_type_display }} {{ i.renewed_by.policy_number }}</a>
+                          </span>
+                          {% endif %}
+                          {% if i.photo %}
+                          <span class="inline-flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                            {% t 'insurance.photo' %}
+                          </span>
+                          {% endif %}
+                        </div>
+                      </div>
+
+                      <div class="text-right flex-shrink-0">
+                        <div class="text-lg font-bold text-slate-900">{{ i.cost }} ₽</div>
+                        <div class="text-xs text-slate-500">{% t 'insurance.per_year' %}</div>
+                        <div class="mt-2 flex gap-2 justify-end">
+                          <a href="{% url 'vehicles:insurance_update' vehicle.pk i.pk %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                            {% t 'insurance.edit' %}
+                          </a>
+                          <form method="post" action="{% url 'vehicles:insurance_delete' vehicle.pk i.pk %}" onsubmit="return confirm('{% t 'insurance.delete_confirm' %}')">
+                            {% csrf_token %}
+                            <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50 transition">
+                              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                              {% t 'vehicle.delete' %}
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                  <div class="w-16 h-16 rounded-2xl bg-rose-50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-rose-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                  </div>
+                  <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.tab_empty' %}</div>
+                  <div class="text-sm text-slate-500 mb-5">{% t 'insurance.empty_hint' %}</div>
+                  <a href="{% url 'vehicles:insurance_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition">
+                    {% t 'insurance.add' %}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Правая колонка: итоги -->
+              <div class="xl:col-span-1 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">{% t 'insurance.summary' %}</h3>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'insurance.active_policies' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ insurance_summary.active }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'insurance.expiring_soon' %}</span>
+                    <span class="text-sm font-bold {% if insurance_summary.expiring %}text-amber-600{% else %}text-slate-900{% endif %}">{{ insurance_summary.expiring }}</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'insurance.year_cost' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ insurance_summary.yearly }} ₽</span>
+                  </div>
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'insurance.tip' %}</div>
+                    <div>{% t 'insurance.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- План -->
+          <section x-show="tab==='planned'" x-cloak data-tab="planned">
+            <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
+
+              <!-- Левая колонка: список -->
+              <div class="xl:col-span-3">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-5">
+                  <div>
+                    <form method="get" action="{% url 'vehicles:detail' vehicle.pk %}" class="flex items-center gap-2 flex-wrap">
+                      <select name="plan_filter" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                        <option value="">{% t 'plan.all' %}</option>
+                        <option value="date" {% if plan_filter == 'date' %}selected{% endif %}>{% t 'plan.by_date' %}</option>
+                        <option value="mileage" {% if plan_filter == 'mileage' %}selected{% endif %}>{% t 'plan.by_mileage' %}</option>
+                        <option value="done" {% if plan_filter == 'done' %}selected{% endif %}>{% t 'plan.done' %}</option>
+                      </select>
+                      {% if plan_filter %}<a href="{% url 'vehicles:detail' vehicle.pk %}" class="text-xs text-slate-500 hover:text-blue-600">✕</a>{% endif %}
+                    </form>
+                    <a href="{% url 'reports:export_xlsx' 'planned' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.excel' %}</a>
+                    <a href="{% url 'reports:export_pdf' 'planned' %}?vehicle={{ vehicle.pk }}" class="inline-flex items-center gap-1.5 text-red-700 bg-red-50 hover:bg-red-100 border border-red-200 font-semibold px-3 py-2 rounded-lg transition">{% t 'exp.pdf' %}</a>
+                  </div>
+                  <a href="{% url 'vehicles:plan_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    {% t 'plan.add' %}
+                  </a>
+                </div>
+
+                {% if plans %}
+                <div class="space-y-3">
+                  {% for e in plans %}
+                  <div class="bg-white rounded-xl border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition {% if e.is_done %}opacity-70{% endif %}">
+                    <div class="flex items-start gap-4">
+                      <div class="w-12 h-12 rounded-xl {% if e.is_done %}bg-emerald-50{% elif e.reminder_type == 'mileage' %}bg-blue-50{% else %}bg-amber-50{% endif %} flex items-center justify-center flex-shrink-0">
+                        {% if e.is_done %}
+                        <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                        {% elif e.reminder_type == 'mileage' %}
+                        <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                        {% else %}
+                        <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                        {% endif %}
+                      </div>
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-start justify-between gap-2 mb-1">
+                          <div>
+                            <div class="flex flex-wrap items-center gap-2">
+                              <h3 class="font-semibold {% if e.is_done %}text-slate-400 line-through{% else %}text-slate-900{% endif %}">{{ e.description }}</h3>
+                              {% if e.is_done %}
+                              <span class="bg-emerald-50 text-emerald-700 text-xs font-medium px-2 py-0.5 rounded">{% t 'plan.done' %}</span>
+                              {% elif e.reminder_type == 'mileage' and e.km_left is not None and e.km_left >= 0 %}
+                              <span class="bg-blue-50 text-blue-700 text-xs font-medium px-2 py-0.5 rounded-full">+{{ e.km_left }} км</span>
+                              {% elif e.days_left is not None and e.days_left == 0 %}
+                              <span class="bg-amber-50 text-amber-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'plan.today' %}</span>
+                              {% elif e.days_left is not None and e.days_left > 0 %}
+                              <span class="bg-amber-50 text-amber-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'plan.in_days' %} {{ e.days_left }}</span>
+                              {% elif e.days_left is not None %}
+                              <span class="bg-red-50 text-red-700 text-xs font-medium px-2 py-0.5 rounded-full">{% t 'plan.overdue' %}</span>
+                              {% endif %}
+                            </div>
+                            {% if e.location %}<p class="text-xs text-slate-500 mt-0.5">{{ e.location }}</p>{% endif %}
+                          </div>
+                          <div class="text-right flex-shrink-0">
+                            <div class="text-base font-bold {% if e.is_done %}text-slate-400{% else %}text-slate-900{% endif %}">{% if e.estimated_cost %}≈ {{ e.estimated_cost }} ₽{% endif %}</div>
+                            {% if e.is_done %}
+                            <div class="text-xs text-slate-400">{% t 'plan.completed' %}</div>
+                            {% elif e.reminder_type == 'mileage' and e.reminder_mileage %}
+                            <div class="text-xs text-slate-500">{% t 'plan.mileage_target' %} {{ e.reminder_mileage }} км</div>
+                            {% elif e.planned_date %}
+                            <div class="text-xs text-slate-500">{{ e.planned_date|date:"d.m.Y H:i" }}</div>
+                            {% endif %}
+                            <div class="text-xs text-purple-600 font-medium mt-1 flex items-center justify-end gap-1">
+                              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                              {% if e.reminder_type == 'mileage' %}{% t 'plan.by_mileage_short' %}{% else %}{% t 'plan.by_date_short' %}{% endif %}
+                            </div>
+                          </div>
+                        </div>
+                        {% if e.planned_date %}
+                        <div class="flex items-center gap-4 mt-3 text-xs text-slate-500">
+                          <span class="flex items-center gap-1">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
+                            {% if e.days_left is not None and e.days_left >= 0 %}{% t 'plan.in_days' %} {{ e.days_left }}{% elif e.days_left is not None %}{% t 'plan.overdue_short' %}{% else %}—{% endif %}
+                          </span>
+                        </div>
+                        {% endif %}
+                      </div>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2 justify-end">
+                      <a href="{% url 'vehicles:plan_update' vehicle.pk e.pk %}" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-blue-700 px-2.5 py-1 rounded-lg hover:bg-blue-50 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                        {% t 'plan.edit' %}
+                      </a>
+                      <form method="post" action="{% url 'vehicles:plan_delete' vehicle.pk e.pk %}" onsubmit="return confirm('{% t 'plan.delete_confirm' %}')">
+                        {% csrf_token %}
+                        <button type="submit" class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-red-700 px-2.5 py-1 rounded-lg hover:bg-red-50 transition">
+                          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                          {% t 'vehicle.delete' %}
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                  {% endfor %}
+                </div>
+                {% else %}
+                <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+                  <div class="w-16 h-16 rounded-2xl bg-indigo-50 flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  </div>
+                  <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.tab_empty' %}</div>
+                  <div class="text-sm text-slate-500 mb-5">{% t 'plan.empty_hint' %}</div>
+                  <a href="{% url 'vehicles:plan_create' vehicle.pk %}" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold px-4 py-2 rounded-lg shadow-md transition">
+                    {% t 'plan.add' %}
+                  </a>
+                </div>
+                {% endif %}
+              </div>
+
+              <!-- Правая колонка: бюджет -->
+              <div class="xl:col-span-1 space-y-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+                  <h3 class="text-sm font-semibold text-slate-900">{% t 'plan.budget' %}</h3>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'plan.planned' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ plan_summary.budget }} ₽</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <span class="text-sm text-slate-600">{% t 'plan.events' %}</span>
+                    <span class="text-sm font-bold text-slate-900">{{ plan_summary.pending_count }}</span>
+                  </div>
+                  {% if plan_summary.nearest %}
+                  <div class="pt-3 border-t border-slate-100">
+                    <div class="text-xs text-slate-500 mb-2">{% t 'plan.nearest' %}</div>
+                    <ul class="space-y-2 text-sm">
+                      {% for e in plan_summary.nearest %}
+                      <li class="flex justify-between">
+                        <span class="text-slate-600 truncate">{{ e.description|truncatechars:24 }}</span>
+                        <span class="text-slate-900 font-medium flex-shrink-0">{% if e.reminder_type == 'mileage' and e.reminder_mileage %}~{{ e.reminder_mileage }} км{% elif e.planned_date %}{{ e.planned_date|date:"d M" }}{% endif %}</span>
+                      </li>
+                      {% endfor %}
+                    </ul>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'plan.tip' %}</div>
+                    <div>{% t 'plan.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          <!-- Статистика -->
+          <section x-show="tab==='stats'" x-cloak data-tab="stats">
+            <div class="space-y-6">
+
+              <!-- Карточки KPI -->
+              <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                  <div class="text-xs text-slate-500 mb-1">{% t 'stats.period_expenses' %}</div>
+                  <div class="text-lg font-bold text-slate-900">{{ stats.total_cost|floatformat:0 }} ₽</div>
+                  <div class="text-xs text-slate-500 mt-1">{% t 'stats.all_time' %}</div>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                  <div class="text-xs text-slate-500 mb-1">{% t 'stats.avg_consumption' %}</div>
+                  <div class="text-lg font-bold text-slate-900">{% if stats.avg_consumption %}{{ stats.avg_consumption }}{% else %}—{% endif %} <span class="text-sm font-normal text-slate-500">{% t 'stats.l_per_100km' %}</span></div>
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                  <div class="text-xs text-slate-500 mb-1">{% t 'stats.cost_per_km' %}</div>
+                  <div class="text-lg font-bold text-slate-900">{% if stats.cost_per_km %}{{ stats.cost_per_km }}{% else %}—{% endif %} ₽</div>
+                  {% if stats.mileage %}<div class="text-xs text-slate-400 mt-1">{% t 'stats.total_mileage' %} {{ stats.mileage }} км</div>{% endif %}
+                </div>
+                <div class="bg-white rounded-xl border border-slate-200 p-4">
+                  <div class="text-xs text-slate-500 mb-1">{% t 'stats.avg_price_per_liter' %}</div>
+                  <div class="text-lg font-bold text-slate-900">{% if stats.avg_price %}{{ stats.avg_price }}{% else %}—{% endif %} ₽</div>
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+                <!-- График: расходы по месяцам -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-slate-900">{% t 'stats.by_month' %}</h3>
+                    <span class="text-xs text-slate-500">{% t 'stats.months_count' %}</span>
+                  </div>
+                  {% if stats.monthly %}
+                  <div class="h-40 flex items-end gap-2">
+                    {% for m in stats.monthly %}
+                    <div class="flex-1 flex flex-col items-center justify-end gap-0.5" title="{{ m.month }}: {{ m.total }} ₽">
+                      {% if m.fuel %}<div class="w-full bg-blue-400 rounded-t" style="height: {% widthratio m.fuel stats.monthly_max 100 %}%"></div>{% endif %}
+                      {% if m.purchase %}<div class="w-full bg-slate-300" style="height: {% widthratio m.purchase stats.monthly_max 100 %}%"></div>{% endif %}
+                      {% if m.service %}<div class="w-full bg-purple-300" style="height: {% widthratio m.service stats.monthly_max 100 %}%"></div>{% endif %}
+                      {% if m.fines %}<div class="w-full bg-red-200" style="height: {% widthratio m.fines stats.monthly_max 100 %}%"></div>{% endif %}
+                    </div>
+                    {% endfor %}
+                  </div>
+                  <div class="flex justify-between text-xs text-slate-400 mt-2">
+                    {% for m in stats.monthly %}<span>{{ m.month|slice:"5:7" }}</span>{% endfor %}
+                  </div>
+                  <div class="flex items-center gap-4 mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-blue-400"></span>{% t 'stats.fuel_cat' %}</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-slate-300"></span>{% t 'stats.purchases_label' %}</span>
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded bg-purple-300"></span>{% t 'stats.service_label' %}</span>
+                  </div>
+                  {% else %}
+                  <div class="text-sm text-slate-500 text-center py-10">{% t 'stats.no_data' %}</div>
+                  {% endif %}
+                </div>
+
+                <!-- График: расход топлива -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-sm font-semibold text-slate-900">{% t 'stats.fuel_consp' %}</h3>
+                    <span class="text-xs text-slate-500">{% t 'stats.for_months' %}</span>
+                  </div>
+                  {% if stats.consumption_history %}
+                  <div class="h-40 flex items-end gap-2">
+                    {% for m in stats.consumption_history %}
+                    <div class="flex-1 bg-blue-500 rounded-t hover:bg-blue-600 transition" title="{{ m.consumption }} л/100 км" style="height: {% widthratio m.consumption stats.consumption_max 100 %}%"></div>
+                    {% endfor %}
+                  </div>
+                  <div class="flex justify-between text-xs text-slate-400 mt-2">
+                    {% for m in stats.consumption_history %}<span>{{ m.month|slice:"5:7" }}</span>{% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="text-sm text-slate-500 text-center py-10">{% t 'stats.no_data' %}</div>
+                  {% endif %}
+                  <div class="mt-3 pt-3 border-t border-slate-100">
+                    <div class="text-xs text-slate-500">{% t 'stats.monthly_avg' %}</div>
+                    <div class="text-xl font-bold text-slate-900">{% if stats.avg_consumption %}{{ stats.avg_consumption }}{% else %}—{% endif %} <span class="text-sm font-normal text-slate-500">{% t 'stats.l_per_100km' %}</span></div>
+                  </div>
+                </div>
+
+              </div>
+
+              <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+                <!-- Топ-5 статей расходов -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                  <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'stats.top5' %}</h3>
+                  {% if stats.category_top %}
+                  <div class="space-y-3">
+                    {% for c in stats.category_top %}
+                    <div>
+                      <div class="flex justify-between text-sm mb-1">
+                        <span class="text-slate-700">
+                          {% if c.key == 'fuel' %}{% t 'stats.fuel_cat' %}{% elif c.key == 'service' %}{% t 'stats.service_cat' %}{% elif c.key == 'insurance' %}{% t 'stats.insurance_cat' %}{% elif c.key == 'fines' %}{% t 'stats.fines_cat' %}{% else %}{{ c.name }}{% endif %}
+                        </span>
+                        <span class="font-semibold text-slate-900">{{ c.total }} ₽</span>
+                      </div>
+                      <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full" style="width: {% widthratio c.total stats.category_max 100 %}%; background-color: {{ c.color }}"></div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                  {% else %}
+                  <div class="text-sm text-slate-500 text-center py-10">{% t 'stats.no_data' %}</div>
+                  {% endif %}
+                </div>
+
+                <!-- Расходы по категориям (кольцевая) -->
+                <div class="bg-white rounded-xl border border-slate-200 p-5">
+                  <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'stats.by_category' %}</h3>
+                  {% if stats.categories %}
+                  <div class="flex items-center gap-6">
+                    <div class="relative w-32 h-32 flex-shrink-0">
+                      <svg viewBox="0 0 120 120" class="w-full h-full -rotate-90">
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="#e2e8f0" stroke-width="14"></circle>
+                        {% for c in stats.categories %}
+                        <circle cx="60" cy="60" r="48" fill="none" stroke="{{ c.color }}" stroke-width="14" stroke-dasharray="{{ c.dash }} 302" stroke-dashoffset="{{ c.dashoffset }}" stroke-linecap="round"></circle>
+                        {% endfor %}
+                      </svg>
+                      <div class="absolute inset-0 flex items-center justify-center text-center">
+                        <div><div class="text-lg font-bold text-slate-900">{{ stats.total_display }}</div><div class="text-[10px] text-slate-500">{% t 'stats.thousand' %}</div></div>
+                      </div>
+                    </div>
+                    <div class="flex-1 space-y-2 text-sm">
+                      {% for c in stats.categories %}
+                      <div class="flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded flex-shrink-0" style="background-color: {{ c.color }}"></span>
+                        <span class="text-slate-600 flex-1 truncate">
+                          {% if c.key == 'fuel' %}{% t 'stats.fuel_cat' %}{% elif c.key == 'service' %}{% t 'stats.service_cat' %}{% elif c.key == 'insurance' %}{% t 'stats.insurance_cat' %}{% elif c.key == 'fines' %}{% t 'stats.fines_cat' %}{% else %}{{ c.name }}{% endif %}
+                        </span>
+                        <span class="text-slate-900 font-medium">{{ c.pct|floatformat:0 }}%</span>
+                      </div>
+                      {% endfor %}
+                    </div>
+                  </div>
+                  {% else %}
+                  <div class="text-sm text-slate-500 text-center py-10">{% t 'stats.no_data' %}</div>
+                  {% endif %}
+                </div>
+
+              </div>
+            </div>
+          </section>
+
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+var __currentTab = '{{ active_tab|default:"fuel" }}';
+
+document.addEventListener('click', function(e) {
+  var link = e.target.closest('a[href*="_create"], a[href*="_update"]');
+  if (!link) return;
+  var section = link.closest('[data-tab]');
+  if (section) {
+    e.preventDefault();
+    var tab = section.getAttribute('data-tab');
+    __currentTab = tab;
+    var href = link.getAttribute('href');
+    var separator = href.indexOf('?') !== -1 ? '&' : '?';
+    window.location.href = href + separator + 'tab=' + tab;
+  }
+}, true);
+
+function tabManager(initialTab) {
+  return {
+    tab: initialTab || __currentTab || 'fuel',
+
+    switchTab(newTab) {
+      if (this.tab === newTab) return;
+      this.tab = newTab;
+      __currentTab = newTab;
+      sessionStorage.setItem('active_tab', this.tab);
+      this._syncUrl();
+    },
+
+    _syncUrl() {
+      const params = new URLSearchParams(window.location.search);
+      params.set('tab', this.tab);
+      window.history.replaceState(null, '', '?' + params.toString());
+    },
+
+    clearFilter(baseUrl) {
+      var saved = sessionStorage.getItem('active_tab') || this.tab;
+      var separator = baseUrl.indexOf('?') !== -1 ? '&' : '?';
+      window.location.href = baseUrl + separator + 'tab=' + saved;
+    },
+
+    init() {
+      const params = new URLSearchParams(window.location.search);
+      var saved = sessionStorage.getItem('active_tab');
+      if (saved && !params.get('tab')) {
+        this.tab = saved;
+        __currentTab = saved;
+        window.history.replaceState(null, '', '?' + new URLSearchParams({ tab: saved }));
+        return;
+      }
+      const urlTab = params.get('tab');
+      if (urlTab) {
+        this.tab = urlTab;
+        __currentTab = urlTab;
+        sessionStorage.setItem('active_tab', urlTab);
+      }
+      if (!this.tab) {
+        this.tab = 'fuel';
+        __currentTab = this.tab;
+      }
+    }
+  };
+}
+</script>
+{% endblock %}

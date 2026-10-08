@@ -1,0 +1,12 @@
+-r base.txt
+-r bots.txt
+pytest==8.3.4
+pytest-django==4.9.0
+pytest-cov==6.0.0
+playwright==1.49.1
+ruff==0.8.6
+bandit==1.9.4
+safety==3.8.1
+factory-boy==3.3.1
+freezegun==1.5.1
+django-debug-toolbar==4.4.6

@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Настройка статусов — Рабочее</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+  <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200">
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500"></div>
+      <div><div class="font-bold text-slate-900">Мои записи</div><div class="text-xs text-slate-500">v1.0</div></div>
+    </div>
+    <nav class="flex-1 px-3 py-4 space-y-1">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50">Дашборд</a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50">Бортжурнал</a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-emerald-50 text-emerald-700 font-medium">Записная книжка</a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50">Отчёты</a>
+    </nav>
+  </aside>
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center px-4 lg:px-8">
+      <div class="flex items-center gap-3">
+        <a href="#" class="p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+        </a>
+        <div>
+          <div class="text-xs text-slate-500">Записная книжка · Рабочее · Настройки доски</div>
+          <div class="text-sm font-semibold text-slate-900">Статусы задач</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div class="max-w-2xl mx-auto">
+        <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-6 text-sm text-amber-800">
+          ⚠️ Системные статусы (из ТЗ) можно переименовывать и менять цвет, но нельзя удалить, пока в них есть задачи.
+          Порядок колонок на Kanban = порядок в этом списке (перетаскивайте за ⠿).
+        </div>
+
+        <!-- Список статусов (drag за ручку — SortableJS) -->
+        <div class="space-y-2">
+          <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 hover:shadow-sm transition">
+            <button class="text-slate-300 hover:text-slate-500 cursor-grab" title="Переместить">⠿</button>
+            <button class="w-5 h-5 rounded-full bg-slate-400 flex-shrink-0" title="Цвет"></button>
+            <input type="text" value="Новый" class="flex-1 px-2 py-1 border border-transparent hover:border-slate-200 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 rounded text-sm font-medium text-slate-900 bg-transparent">
+            <code class="text-xs text-slate-400 font-mono">new</code>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">3 задачи</span>
+            <button class="p-1.5 rounded hover:bg-red-50 opacity-40 cursor-not-allowed" title="Системный — удаление ограничено">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 hover:shadow-sm transition">
+            <button class="text-slate-300 hover:text-slate-500 cursor-grab">⠿</button>
+            <button class="w-5 h-5 rounded-full bg-blue-500 flex-shrink-0"></button>
+            <input type="text" value="Оценка" class="flex-1 px-2 py-1 border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded text-sm font-medium text-slate-900 bg-transparent">
+            <code class="text-xs text-slate-400 font-mono">estimate</code>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">2 задачи</span>
+            <button class="p-1.5 rounded hover:bg-red-50 opacity-40 cursor-not-allowed">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 hover:shadow-sm transition">
+            <button class="text-slate-300 hover:text-slate-500 cursor-grab">⠿</button>
+            <button class="w-5 h-5 rounded-full bg-amber-500 flex-shrink-0"></button>
+            <input type="text" value="В работе" class="flex-1 px-2 py-1 border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded text-sm font-medium text-slate-900 bg-transparent">
+            <code class="text-xs text-slate-400 font-mono">in_progress</code>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">4 задачи</span>
+            <button class="p-1.5 rounded hover:bg-red-50 opacity-40 cursor-not-allowed">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 hover:shadow-sm transition">
+            <button class="text-slate-300 hover:text-slate-500 cursor-grab">⠿</button>
+            <button class="w-5 h-5 rounded-full bg-orange-500 flex-shrink-0"></button>
+            <input type="text" value="Тестирование" class="flex-1 px-2 py-1 border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded text-sm font-medium text-slate-900 bg-transparent">
+            <code class="text-xs text-slate-400 font-mono">testing</code>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">1 задача</span>
+            <button class="p-1.5 rounded hover:bg-red-50 opacity-40 cursor-not-allowed">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <div class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-3 hover:shadow-sm transition">
+            <button class="text-slate-300 hover:text-slate-500 cursor-grab">⠿</button>
+            <button class="w-5 h-5 rounded-full bg-emerald-500 flex-shrink-0"></button>
+            <input type="text" value="Готово" class="flex-1 px-2 py-1 border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded text-sm font-medium text-slate-900 bg-transparent">
+            <code class="text-xs text-slate-400 font-mono">done</code>
+            <span class="text-xs bg-slate-100 text-slate-500 px-2 py-0.5 rounded-full">24 задачи</span>
+            <button class="p-1.5 rounded hover:bg-red-50 opacity-40 cursor-not-allowed">
+              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+          <!-- Пользовательский статус — удаляемый -->
+          <div class="flex items-center gap-3 bg-white border border-emerald-200 rounded-xl p-3 hover:shadow-sm transition">
+            <button class="text-slate-300 hover:text-slate-500 cursor-grab">⠿</button>
+            <button class="w-5 h-5 rounded-full bg-purple-500 flex-shrink-0"></button>
+            <input type="text" value="На доработке" class="flex-1 px-2 py-1 border border-transparent hover:border-slate-200 focus:border-emerald-500 rounded text-sm font-medium text-slate-900 bg-transparent">
+            <code class="text-xs text-slate-400 font-mono">custom</code>
+            <span class="text-[10px] font-semibold uppercase tracking-wider bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded-full">свой</span>
+            <button class="p-1.5 rounded hover:bg-red-50">
+              <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Добавление -->
+        <form class="mt-4 flex gap-2">
+          <input type="text" placeholder="Название нового статуса" class="flex-1 px-4 py-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500">
+          <button type="button" class="w-10 rounded-lg border border-slate-200 bg-cyan-500 hover:opacity-90 transition" title="Цвет"></button>
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-4 rounded-lg transition">Добавить</button>
+        </form>
+
+        <div class="flex justify-end mt-6">
+          <button class="bg-slate-900 hover:bg-slate-700 text-white font-semibold px-5 py-2.5 rounded-lg transition">Сохранить порядок и названия</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

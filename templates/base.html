@@ -1,0 +1,46 @@
+{% load i18n_lang %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{% t 'app.name' %}{% endblock %}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+  <style>
+    :root {
+      --app-bg: #F8FAFC;
+      --app-card: #FFFFFF;
+      --app-text: #0F172A;
+      --app-text-secondary: #64748B;
+      --app-accent: #2563EB;
+      --app-accent-2: #10B981;
+    }
+    html.dark {
+      --app-bg: #0F172A;
+      --app-card: #1E293B;
+      --app-text: #F1F5F9;
+      --app-text-secondary: #94A3B8;
+      --app-accent: #3B82F6;
+      --app-accent-2: #34D399;
+    }
+    body { font-family: 'Inter', sans-serif; background-color: var(--app-bg); color: var(--app-text); }
+  </style>
+  <script>
+  (function () {
+    const root = document.documentElement;
+    window.__setTheme = function (theme) { root.classList.toggle('dark', theme === 'dark'); };
+  })();
+  </script>
+  {% if user.is_authenticated and user.settings.dark_theme %}
+  <script>document.documentElement.classList.add('dark');</script>
+  {% endif %}
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="min-h-screen bg-slate-50">
+  {% block content %}{% endblock %}
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

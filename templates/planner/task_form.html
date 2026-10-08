@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'pl.task_new' %}{% else %}{% t 'pl.task_edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% if is_new %}{% t 'pl.task_new' as header_ttl %}{% else %}{% t 'pl.task_edit' as header_ttl %}{% endif %}
+    {% t 'pl.scope_work' as crumb_w %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl header_crumb=crumb_w %}
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <form method="post" class="max-w-3xl mx-auto space-y-6">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{{ form.non_field_errors }}</div>{% endif %}
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+          <div>
+            <label class="field-label" for="{{ form.title.id_for_label }}">{% t 'pl.field_title' %} <span class="text-red-500">*</span></label>
+            {{ form.title }}
+            {% for e in form.title.errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.description.id_for_label }}">{% t 'pl.field_description' %} <span class="text-xs font-normal text-slate-400">Markdown</span></label>
+            {{ form.description }}
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-3 gap-4">
+          <div>
+            <label class="field-label" for="{{ form.status.id_for_label }}">{% t 'pl.field_status' %}</label>
+            {{ form.status }}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.project.id_for_label }}">{% t 'pl.field_project' %}</label>
+            {{ form.project }}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.priority.id_for_label }}">{% t 'pl.field_priority' %}</label>
+            {{ form.priority }}
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label" for="{{ form.date_start.id_for_label }}">{% t 'pl.field_date_start' %}</label>
+            {{ form.date_start }}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.date_due.id_for_label }}">{% t 'pl.field_due' %}</label>
+            <div class="flex gap-2">{{ form.date_due }}{{ form.time_due }}</div>
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.estimated_hours.id_for_label }}">{% t 'pl.field_estimate' %}</label>
+            {{ form.estimated_hours }}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.actual_hours.id_for_label }}">{% t 'pl.field_actual' %}</label>
+            {{ form.actual_hours }}
+          </div>
+        </div>
+
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label" for="{{ form.tags.id_for_label }}">{% t 'pl.field_tags' %}</label>
+            {{ form.tags }}
+            <p class="text-xs text-slate-400 mt-1">{% t 'pl.tags_hint' %}</p>
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.recurrence.id_for_label }}">{% t 'pl.recurrence' %}</label>
+            {{ form.recurrence }}
+            <div class="mt-2 flex flex-wrap gap-2">
+              {% for cb in form.recurrence_byday %}<label class="inline-flex items-center gap-1 text-xs text-slate-600">{{ cb.tag }}{{ cb.choice_label }}</label>{% endfor %}
+            </div>
+            <div class="mt-2 flex items-center gap-2">
+              <label class="text-xs text-slate-500">{% t 'pl.interval_days' %}</label>
+              <div class="w-24">{{ form.recurrence_interval }}</div>
+            </div>
+            {% for e in form.recurrence.errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+            <div class="mt-2 flex items-center gap-2">
+              <label class="text-xs text-slate-500">{% t 'pl.repeat_until' %}</label>
+              <div class="w-40">{{ form.recurrence_until }}</div>
+            </div>
+            <div class="mt-2 flex items-center gap-2">
+              <label class="text-xs text-slate-500">{% t 'pl.recurrence_count' %}</label>
+              <div class="w-24">{{ form.recurrence_count }}</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pb-8">
+          <a href="{% url 'planner:work' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">{% t 'pl.cancel' %}</a>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow-md transition">{% if is_new %}{% t 'pl.task_create_btn' %}{% else %}{% t 'pl.save' %}{% endif %}</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+{% endblock %}

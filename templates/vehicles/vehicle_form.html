@@ -1,0 +1,349 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'vehicle.new' %}{% else %}{% t 'vehicle.edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='vehicles' %}
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <a href="{% url 'vehicles:list' %}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">{% t 'vehicle.fleet' %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% if is_new %}{% t 'vehicle.new' %}{% else %}{% t 'vehicle.edit' %}{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{% url 'vehicles:list' %}" class="hidden sm:inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition">
+          {% t 'vehicle.cancel' %}
+        </a>
+        <button form="vehicle-form" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% t 'vehicle.save' %}
+        </button>
+      </div>
+    </header>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="px-4 lg:px-8 pt-4 max-w-5xl mx-auto w-full">
+          <div class="px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ message }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-5xl mx-auto">
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- ============ ЛЕВАЯ КОЛОНКА: ФОРМА ============ -->
+          <div class="xl:col-span-2 space-y-5">
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700">
+              {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <form method="post" id="vehicle-form" enctype="multipart/form-data" class="space-y-5">
+              {% csrf_token %}
+
+              <!-- Блок 1: Фото -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </span>
+                  {% t 'vehicle_photo' %}
+                </h2>
+
+                {% if vehicle and vehicle.photo %}
+                <div class="mb-3 flex items-center gap-3 bg-slate-50 rounded-xl p-3">
+                  <img src="{{ vehicle.photo.url }}" class="w-16 h-12 rounded-lg object-cover" alt="">
+                  <div class="flex-1 min-w-0 text-sm font-medium text-slate-900 truncate">{{ vehicle.photo.name }}</div>
+                </div>
+                {% endif %}
+
+                <label class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-6 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30 block">
+                  <svg class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                  <div class="text-sm font-medium text-slate-700">{% t 'vehicle_photo_hint' %}</div>
+                  <div class="text-xs text-slate-500 mt-1">{% t 'cln.image_hint' %}</div>
+                  {{ form.photo }}
+                </label>
+              </div>
+
+              <!-- Блок 2: Марка и модель -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                  </span>
+                  {% t 'vehicle_brand_model' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div id="brand-field">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.brand.label }}</label>
+                    {{ form.brand }}
+                    {{ form.brand_custom }}
+                    {% for error in form.brand.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div id="model-field">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.model.label }}</label>
+                    {{ form.model }}
+                    {{ form.model_custom }}
+                    {% for error in form.model.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'vehicle_year' %}</label>
+                    {{ form.year }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 3: Идентификация -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"/>
+                    </svg>
+                  </span>
+                  {% t 'vehicle_id' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'vehicle.plate' %}</label>
+                    {{ form.license_plate }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">VIN <span class="text-slate-400 font-normal">· {% t 'cln.unit_vin_chars' %}</span></label>
+                    {{ form.vin }}
+                    {% for error in form.vin.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 4: Технические характеристики -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </span>
+                  {% t 'vehicle_specs' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.fuel_type.label }}</label>
+                    {{ form.fuel_type }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.engine_volume.label }} <span class="text-slate-400 font-normal">· {% t 'cln.unit_l' %}</span></label>
+                    {{ form.engine_volume }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.power_hp.label }} <span class="text-slate-400 font-normal">· {% t 'cln.unit_hp' %}</span></label>
+                    {{ form.power_hp }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.transmission.label }}</label>
+                    {{ form.transmission }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.drive_type.label }}</label>
+                    {{ form.drive_type }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.current_mileage.label }} <span class="text-slate-400 font-normal">· {% t 'cln.unit_km' %}</span></label>
+                    {{ form.current_mileage }}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Нижние кнопки (мобильные) -->
+              <div class="flex flex-col sm:flex-row gap-2 sm:hidden">
+                <a href="{% url 'vehicles:list' %}" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg transition text-center">
+                  {% t 'vehicle.cancel' %}
+                </a>
+                <button type="submit" form="vehicle-form" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+                  {% t 'vehicle.save' %}
+                </button>
+              </div>
+
+            </form>
+
+          </div>
+
+          <!-- ============ ПРАВАЯ КОЛОНКА ============ -->
+          <div class="xl:col-span-1 space-y-4">
+
+            <form method="post">{% csrf_token %}
+              <div class="bg-white rounded-2xl border border-slate-200 p-5">
+                <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                  <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                  </svg>
+                  {% t 'vehicle_status' %}
+                </h3>
+                <label class="flex items-center gap-3 w-full p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  {{ form.is_default }}
+                  <div>
+                    <div class="text-sm font-medium text-slate-900">{% t 'vehicle.make_default' %}</div>
+                    <div class="text-xs text-slate-500">{% t 'vehicle_default_hint' %}</div>
+                  </div>
+                </label>
+              </div>
+            </form>
+
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <div class="flex gap-3">
+                <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-xs text-amber-900">
+                  <div class="font-semibold mb-1">{% t 'vehicle_tip_title' %}</div>
+                  <div>{% t 'vehicle_tip_vin' %}</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  const CUSTOM = "__custom__";
+  const brandSel = document.getElementById("id_brand");
+  const modelSel = document.getElementById("id_model");
+  const brandCustom = document.getElementById("id_brand_custom");
+  const modelCustom = document.getElementById("id_model_custom");
+
+  function setHidden(el, hidden) {
+    if (!el) return;
+    el.style.display = hidden ? "none" : "";
+  }
+
+  function labelFor(el) {
+    return el && el.previousElementSibling;
+  }
+
+  function rebuildModelOptions(placeholder, models, keep) {
+    modelSel.innerHTML = "";
+    const ph = document.createElement("option");
+    ph.value = "";
+    ph.textContent = placeholder;
+    modelSel.appendChild(ph);
+    (models || []).forEach(function (m) {
+      const o = document.createElement("option");
+      o.value = m.id;
+      o.textContent = m.name;
+      if (keep && String(keep) === String(m.id)) o.selected = true;
+      modelSel.appendChild(o);
+    });
+    const c = document.createElement("option");
+    c.value = CUSTOM;
+    c.textContent = "{% t 'cln.custom_model' %}";
+    modelSel.appendChild(c);
+  }
+
+  function fetchModels(brandId, selected) {
+    fetch("{% url 'vehicles:models_api' %}?brand=" + encodeURIComponent(brandId), {
+      headers: { "X-Requested-With": "XMLHttpRequest" }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        rebuildModelOptions("{% t 'cln.model_placeholder' %}", data.models, selected);
+      })
+      .catch(function () {
+        rebuildModelOptions("{% t 'cln.model_placeholder' %}", [], null);
+      });
+  }
+
+  brandSel.addEventListener("change", function () {
+    if (brandSel.value === CUSTOM) {
+      brandSel.value = "";
+      setHidden(brandCustom, false);
+    } else if (brandSel.value) {
+      setHidden(brandCustom, true);
+      brandCustom.value = "";
+      modelSel.value = "";
+      fetchModels(brandSel.value, null);
+    } else {
+      setHidden(brandCustom, true);
+    }
+  });
+
+  modelSel.addEventListener("change", function () {
+    if (modelSel.value === CUSTOM) {
+      modelSel.value = "";
+      setHidden(modelCustom, false);
+    } else if (modelSel.value) {
+      setHidden(modelCustom, true);
+      modelCustom.value = "";
+    }
+  });
+
+  // Init on load (edit mode)
+  function init() {
+    // Add "custom brand" option to the brand select
+    const c = document.createElement("option");
+    c.value = CUSTOM;
+    c.textContent = "{% t 'cln.custom_brand' %}";
+    brandSel.appendChild(c);
+
+    setHidden(brandCustom, !brandCustom.value || !brandCustom.value.trim() ? true : false);
+    if (brandCustom && brandCustom.value && brandCustom.value.trim()) {
+      brandSel.value = "";
+    }
+    if (brandCustom && brandCustom.value.trim()) setHidden(brandCustom, false);
+
+    // model: if custom chosen — show field, otherwise load options for brand
+    if (modelCustom && modelCustom.value.trim()) setHidden(modelCustom, false);
+    if (brandSel.value) {
+      const modelOption = modelSel.options[modelSel.selectedIndex];
+      const selectedModel = modelSel.value;
+      fetchModels(brandSel.value, selectedModel);
+      if (modelOption && modelOption.textContent === "{% t 'cln.custom_model' %}") {
+        setHidden(modelCustom, true);
+      }
+    }
+  }
+
+  init();
+})();
+</script>
+{% endblock %}

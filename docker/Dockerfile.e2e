@@ -1,0 +1,28 @@
+FROM mynotes-web
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libnss3 \
+    libnspr4 \
+    libdbus-1-3 \
+    libatk1.0-0t64 \
+    libatk-bridge2.0-0t64 \
+    libatspi2.0-0t64 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxrandr2 \
+    libgbm1 \
+    libdrm2 \
+    libxkbcommon0 \
+    libasound2t64 \
+    && rm -rf /var/lib/apt/lists/*
+RUN python -m playwright install --only-shell chromium
+RUN apt-get update && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
+RUN curl --fail --location --retry 3 \
+    https://cdnjs.cloudflare.com/ajax/libs/axe-core/4.10.3/axe.min.js \
+    --output /opt/axe.min.js
+
+CMD ["pytest", "-q", "tests/e2e"]

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'pl.project_new' %}{% else %}{% t 'pl.project_edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% if is_new %}{% t 'pl.project_new' as header_ttl %}{% else %}{% t 'pl.project_edit' as header_ttl %}{% endif %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl header_crumb=pl_projects_word %}
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <form method="post" class="max-w-2xl mx-auto bg-white rounded-xl border border-slate-200 p-6 space-y-4">
+        {% csrf_token %}
+        {% if form.non_field_errors %}<div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{{ form.non_field_errors }}</div>{% endif %}
+        <div>
+          <label class="field-label" for="{{ form.title.id_for_label }}">{% t 'pl.field_title' %} <span class="text-red-500">*</span></label>
+          {{ form.title }}
+          {% for e in form.title.errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+        </div>
+        <div>
+          <label class="field-label" for="{{ form.description.id_for_label }}">{% t 'pl.field_description' %}</label>
+          {{ form.description }}
+        </div>
+        <div class="grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label" for="{{ form.scope_choice.id_for_label }}">{% t 'pl.field_scope' %}</label>
+            {{ form.scope_choice }}
+          </div>
+          <div>
+            <label class="field-label">{% t 'pl.field_color' %}</label>
+            <div class="flex gap-2 pt-1" id="color-picker">
+              {% for c in preset_colors %}
+                <label class="w-7 h-7 rounded-full cursor-pointer ring-offset-2 hover:ring-2" style="background: {{ c }}"
+                       onclick="document.getElementById('{{ form.color.id_for_label }}').value='{{ c }}'">
+                  <input type="radio" name="color_radio" value="{{ c }}" class="hidden" {% if forloop.first %}checked{% endif %}>
+                </label>
+              {% endfor %}
+              <input type="color" value="{{ form.color.value|default:'#3B82F6' }}" class="w-9 h-7 rounded cursor-pointer"
+                     oninput="document.getElementById('{{ form.color.id_for_label }}').value=this.value">
+            </div>
+            <div class="hidden">{{ form.color }}</div>
+          </div>
+        </div>
+        <label class="inline-flex items-center gap-2 text-sm text-slate-600">{{ form.is_archived }} {% t 'pl.field_archived' %}</label>
+        <div class="flex justify-end gap-3 pt-2">
+          <a href="{% url 'planner:projects' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100">{% t 'pl.cancel' %}</a>
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md transition">{% t 'pl.save' %}</button>
+        </div>
+      </form>
+    </main>
+  </div>
+</div>
+{% endblock %}

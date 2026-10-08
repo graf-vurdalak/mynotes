@@ -1,0 +1,52 @@
+# Environment
+.env
+.env.*
+!.env.example
+# шаблон прод-.env без секретов — коммитится (Этап 9.1)
+!.env.prod.template
+# Реальный SeaweedFS IAM-конфиг с ключами (в git — только docker/s3-prod.json.example)
+s3-prod.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.coverage
+
+# Virtual environment
+venv/
+.venv/
+
+# Django
+*.log
+media/
+staticfiles/
+
+# Database
+*.sqlite3
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Progress (local tracking, not committed)
+docs/progress.md
+
+# Celery beat state file
+celerybeat-schedule
+celerybeat-schedule.*
+
+# Артефакты dev-тулинга — не часть приложения, на GitHub не публикуются (Этап 9.2).
+# Локально работают как раньше (graphify-out/ — кэш графа знаний, .kilo/ — конфиг агента).
+graphify-out/
+.kilo/

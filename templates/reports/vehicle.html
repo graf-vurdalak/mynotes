@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'rep.vehicle.title' %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='reports' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+      <div>
+        <div class="text-xs text-slate-500">{% t 'rep.vehicle.crumb' %}</div>
+        <div class="text-sm font-semibold text-slate-900">{% t 'rep.vehicle.title' %}</div>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'reports:export_xlsx' 'vehicle_report' %}?{{ request.GET.urlencode }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition">{% t 'exp.excel' %}</a>
+        <a href="{% url 'reports:export_pdf' 'vehicle_report' %}?{{ request.GET.urlencode }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 transition">{% t 'exp.pdf' %}</a>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- Фильтры -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-end gap-3">
+          <div>
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.period' %}</div>
+            <div class="flex gap-1 flex-wrap">
+              <a href="?period=3m{% if selected %}&vehicle={{ selected }}{% endif %}" class="px-3 py-1.5 rounded-full text-sm {% if period == '3m' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.period.3m' %}</a>
+              <a href="?period=6m{% if selected %}&vehicle={{ selected }}{% endif %}" class="px-3 py-1.5 rounded-full text-sm {% if period == '6m' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.period.6m' %}</a>
+              <a href="?period=12m{% if selected %}&vehicle={{ selected }}{% endif %}" class="px-3 py-1.5 rounded-full text-sm {% if period == '12m' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.period.12m' %}</a>
+              <a href="?period=all{% if selected %}&vehicle={{ selected }}{% endif %}" class="px-3 py-1.5 rounded-full text-sm {% if period == 'all' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.period.all' %}</a>
+              <a href="?period=custom{% if selected %}&vehicle={{ selected }}{% endif %}" class="px-3 py-1.5 rounded-full text-sm {% if period == 'custom' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.period.custom' %}</a>
+            </div>
+          </div>
+          {% if period == 'custom' %}
+          <form method="get" class="flex items-end gap-2">
+            <input type="hidden" name="period" value="custom">
+            {% if selected %}<input type="hidden" name="vehicle" value="{{ selected }}">{% endif %}
+            <div>
+              <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.custom_hint' %}</div>
+              <input type="date" name="start" value="{{ start|date:'Y-m-d' }}" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.custom_end' %}</div>
+              <input type="date" name="end" value="{{ end|date:'Y-m-d' }}" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
+            </div>
+            <button class="px-3 py-1.5 rounded-lg text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100">{% t 'rep.filter.apply' %}</button>
+          </form>
+          {% endif %}
+          <form method="get" class="ml-auto">
+            <input type="hidden" name="period" value="{{ period }}">
+            {% if period == 'custom' and start %}<input type="hidden" name="start" value="{{ start|date:'Y-m-d' }}">{% endif %}
+            {% if period == 'custom' and end %}<input type="hidden" name="end" value="{{ end|date:'Y-m-d' }}">{% endif %}
+            <div>
+              <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.vehicle' %}</div>
+              <select name="vehicle" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-blue-500">
+                <option value="">{% t 'rep.vehicle.all' %}</option>
+                {% for v in all_vehicles %}
+                  <option value="{{ v.pk }}" {% if selected == v.pk|stringformat:'s' %}selected{% endif %}>{{ v }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+
+        {% if not all_vehicles %}
+          <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-400">
+            {% t 'rep.no_vehicles' %}
+          </div>
+        {% elif report %}
+
+        <!-- KPI -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.expenses' %}</div>
+            <div class="text-lg font-bold text-slate-900">{{ report.kpi.total|floatformat:0 }} ₽</div>
+            <div class="text-xs text-slate-500 mt-1">{% t 'vehicle.fuel' %}: {{ report.kpi.fuel|floatformat:0 }} ₽ · {% t 'rep.chart.other' %}: {{ report.kpi.other|floatformat:0 }} ₽</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.per_km' %}</div>
+            <div class="text-lg font-bold text-slate-900">{% if report.kpi.cost_per_km %}{{ report.kpi.cost_per_km }} ₽{% else %}—{% endif %}</div>
+            {% if report.kpi.mileage_km %}<div class="text-xs text-slate-500 mt-1">{% t 'rep.kpi.mileage' km=report.kpi.mileage_km %}</div>{% endif %}
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.consumption' %}</div>
+            <div class="text-lg font-bold text-slate-900">{% if report.kpi.avg_consumption %}{{ report.kpi.avg_consumption }} <span class="text-sm font-normal text-slate-500">{% t 'rep.kpi.unit_l100' %}</span>{% else %}—{% endif %}</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.liters' %}</div>
+            <div class="text-lg font-bold text-slate-900">{{ report.kpi.liters|floatformat:1 }} <span class="text-sm font-normal text-slate-500">л</span></div>
+          </div>
+        </div>
+
+        {% if all_vehicles|length == 1 %}
+        <!-- Прогноз ТО -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-slate-900">{% t 'rep.forecast.title' %}</h3>
+            {% if forecast %}
+              {% if forecast.avg_km and forecast.avg_days %}
+                <span class="text-xs text-slate-500">{% t 'rep.forecast.avg' km=forecast.avg_km days=forecast.avg_days %}</span>
+              {% endif %}
+            {% endif %}
+          </div>
+          {% if forecast %}
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {% if forecast.next_km %}
+            <div class="rounded-lg bg-blue-50 border border-blue-100 p-4">
+              <div class="text-xs text-blue-600 font-medium mb-1">{% t 'rep.forecast.by_km' %}</div>
+              <div class="text-xl font-bold text-slate-900">{{ forecast.next_km }} км</div>
+              <div class="text-xs text-slate-500 mt-1">{% t 'rep.forecast.km_now' current=forecast.current left=forecast.km_left %}</div>
+            </div>
+            {% endif %}
+            {% if forecast.next_date %}
+            <div class="rounded-lg bg-emerald-50 border border-emerald-100 p-4">
+              <div class="text-xs text-emerald-600 font-medium mb-1">{% t 'rep.forecast.by_date' %}</div>
+              <div class="text-xl font-bold text-slate-900">{{ forecast.next_date|date:'d.m.Y' }}</div>
+              <div class="text-xs text-slate-500 mt-1">{% t 'rep.forecast.last' date=forecast.last_service_date|date:'d.m.Y' odo=forecast.last_odometer %}</div>
+            </div>
+            {% endif %}
+            {% if forecast.planned %}
+            <div class="rounded-lg bg-amber-50 border border-amber-100 p-4">
+              <div class="text-xs text-amber-600 font-medium mb-1">{% t 'vehicle.planned' %}</div>
+              <div class="text-sm font-semibold text-slate-900 leading-snug">{{ forecast.planned.description|truncatechars:80 }}</div>
+              <div class="text-xs text-slate-500 mt-2">{{ forecast.planned.planned_date|date:'d.m.Y' }}</div>
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="text-sm text-slate-400">{% t 'rep.forecast.none' %}</div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <!-- Расходы по месяцам -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.monthly' %}</h3>
+            <div id="chart-monthly"></div>
+          </div>
+          <!-- Категории -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.categories' %}</h3>
+            <div id="chart-categories"></div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <!-- Расход топлива -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.consumption' %}</h3>
+            <div id="chart-consumption"></div>
+          </div>
+          <!-- Топ-5 -->
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.top.title' %}</h3>
+            {% if report.top %}
+            <div class="space-y-3">
+              {% for item in report.top %}
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-slate-700 truncate">{{ item.name }} <span class="text-xs text-slate-400">· {{ item.meta }}</span></span>
+                  <span class="font-semibold text-slate-900 whitespace-nowrap">{{ item.amount|floatformat:0 }} ₽</span>
+                </div>
+                <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-blue-500 rounded-full" style="width: {{ item.bar_pct }}%"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-sm text-slate-400">—</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Сводка страховки/штрафы -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5">
+          <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.summary.title' %}</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <tbody class="divide-y divide-slate-100">
+                <tr>
+                  <td class="py-2.5 pr-4 text-slate-700">{% t 'vehicle.insurance' %}</td>
+                  <td class="py-2.5 pr-4">{% t 'rep.summary.ins_active' %}</td>
+                  <td class="py-2.5 pr-4 font-semibold text-slate-900">{{ report.summary.insurance_active }}</td>
+                  <td class="py-2.5 text-slate-500">{% t 'rep.summary.ins_yearly' %}: {{ report.summary.insurance_yearly|floatformat:0 }} ₽</td>
+                </tr>
+                <tr>
+                  <td class="py-2.5 pr-4 text-slate-700">{% t 'vehicle.fines' %}</td>
+                  <td class="py-2.5 pr-4">{% t 'rep.summary.fines_unpaid' %}</td>
+                  <td class="py-2.5 pr-4 font-semibold text-red-600">{{ report.summary.fines_unpaid_count }} · {{ report.summary.fines_unpaid_sum|floatformat:0 }} ₽</td>
+                  <td class="py-2.5 text-slate-500">{% t 'rep.summary.fines_paid' %}: {{ report.summary.fines_paid_count }} · {{ report.summary.fines_paid_sum|floatformat:0 }} ₽</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {% else %}
+        <div class="bg-white rounded-xl border border-slate-200 p-8 text-center text-sm text-slate-400">—</div>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if charts %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2"></script>
+{{ charts|json_script:"report-charts" }}
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById('report-charts').textContent);
+    const base = {
+      chart: { toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+      grid: { borderColor: '#E2E8F0', strokeDashArray: 4 },
+      tooltip: { theme: 'light' },
+      dataLabels: { enabled: false },
+      legend: { position: 'bottom' },
+    };
+    new ApexCharts(document.querySelector('#chart-monthly'), Object.assign({}, base, {
+      chart: { type: 'bar', stacked: true, height: 260, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+      series: data.monthly.series,
+      colors: data.monthly.colors,
+      xaxis: { categories: data.monthly.labels, labels: { style: { colors: '#94A3B8', fontSize: '11px' } } },
+      yaxis: { labels: { formatter: (v) => Math.round(v) } },
+      plotOptions: { bar: { columnWidth: '50%', borderRadius: 3 } },
+    })).render();
+    new ApexCharts(document.querySelector('#chart-categories'), Object.assign({}, base, {
+      chart: { type: 'donut', height: 300, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+      series: data.categories.series,
+      labels: data.categories.labels,
+      colors: data.categories.colors,
+      stroke: { width: 0 },
+      legend: { position: 'right', fontSize: '12px' },
+      plotOptions: { pie: { donut: { size: '62%' } } },
+    })).render();
+    new ApexCharts(document.querySelector('#chart-consumption'), Object.assign({}, base, {
+      chart: { type: 'line', height: 260, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+      series: data.consumption.series,
+      colors: ['#3B82F6'],
+      xaxis: { categories: data.consumption.labels, labels: { style: { colors: '#94A3B8', fontSize: '11px' } } },
+      stroke: { curve: 'smooth', width: 3 },
+      markers: { size: 4 },
+    })).render();
+  })();
+</script>
+{% endif %}
+{% endblock %}

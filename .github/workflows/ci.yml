@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+      - master
+
+permissions:
+  contents: read
+
+jobs:
+  quality:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build development image
+        run: docker compose -f docker-compose.dev.yml build web
+
+      - name: Build Playwright image
+        run: docker compose -f docker-compose.dev.yml --profile testing build e2e
+
+      - name: Run quality gates and full test suite
+        run: |
+          docker compose -f docker-compose.dev.yml --profile testing run --rm e2e sh -c '
+            ruff check . &&
+            bandit -r apps telegram_bots config -ll &&
+            safety check -r requirements/prod.txt --no-prompt --short-report &&
+            python manage.py check &&
+            python manage.py makemigrations --check --dry-run &&
+            pytest --create-db --reuse-db -q \
+              --cov=apps \
+              --cov=telegram_bots \
+              --cov-report=term:skip-covered \
+              --cov-fail-under=70
+          '
+
+      - name: Build production images on main
+        if: github.event_name == 'push'
+        run: |
+          docker build -f docker/Dockerfile.web -t mynotes-web:ci .
+          docker build -f docker/Dockerfile.bot -t mynotes-bot:ci .
+
+      - name: Stop Compose services
+        if: always()
+        run: docker compose -f docker-compose.dev.yml --profile testing down --remove-orphans

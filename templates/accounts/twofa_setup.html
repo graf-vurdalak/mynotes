@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'settings.2fa_title' %} — {% app_name %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='settings' %}
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div>
+        <div class="text-xs text-slate-500">{% t 'settings.lc' %}</div>
+        <div class="text-sm font-semibold text-slate-900">{% t 'settings.title' %} · {% t 'settings.2fa_title' %}</div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-6xl mx-auto p-4 lg:p-8">
+
+        <div class="flex flex-col lg:flex-row gap-6">
+          <aside class="lg:w-64 flex-shrink-0">
+            {% include "partials/_settings_menu.html" with settings_tab='security' %}
+          </aside>
+
+          <div class="flex-1">
+
+            <!-- Шаг 1: сканирование QR -->
+            <div class="bg-white rounded-xl border-2 border-emerald-300 overflow-hidden max-w-2xl">
+              <div class="px-6 py-4 border-b border-emerald-100 bg-emerald-50">
+                <h2 class="text-lg font-semibold text-emerald-900">{% t 'settings.2fa_setup_step1' %}</h2>
+                <p class="text-sm text-emerald-700 mt-0.5">{% t 'settings.2fa_setup_step1_help' %}</p>
+              </div>
+              <div class="p-6">
+                <div class="flex flex-col md:flex-row gap-6">
+                  <div class="w-48 h-48 mx-auto bg-white border border-slate-200 rounded-xl p-3 flex-shrink-0 flex items-center justify-center">
+                    {{ qr_svg|safe }}
+                  </div>
+                  <div class="flex-1 space-y-4">
+                    <div>
+                      <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.2fa_secret' %}</label>
+                      <div class="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5">
+                        <code id="twofa-secret" class="flex-1 font-mono text-sm text-slate-900 break-all">{{ secret }}</code>
+                        <button type="button" onclick="navigator.clipboard.writeText(document.getElementById('twofa-secret').textContent)"
+                                class="p-1.5 rounded-lg hover:bg-slate-200 transition" title="{% t 'tokens.copy' %}">
+                          <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Шаг 2: подтверждение кодом -->
+                    <form method="post" class="space-y-3">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="confirm">
+                      <label class="block text-sm font-medium text-slate-700">{% t 'settings.2fa_setup_step2' %}</label>
+                      <input type="text" name="token" inputmode="numeric" maxlength="6" autocomplete="one-time-code" autofocus
+                             placeholder="000000"
+                             class="w-40 bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm font-mono tracking-widest text-center focus:ring-2 focus:ring-emerald-500 focus:border-transparent">
+                      {% if error %}<p class="text-red-500 text-sm">{{ error }}</p>{% endif %}
+                      <div class="flex gap-2 justify-end pt-1">
+                        <button type="submit" formaction="." name="action" value="cancel"
+                                class="px-4 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 transition">
+                          {% t 'settings.2fa_cancel' %}
+                        </button>
+                        <button type="submit" class="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 shadow-md transition">
+                          {% t 'settings.2fa_confirm_submit' %}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

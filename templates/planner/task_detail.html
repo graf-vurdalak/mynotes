@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{{ task.title }}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% t 'pl.task_title' as header_ttl %}
+    {% t 'pl.scope_work' as crumb_w %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl header_crumb=crumb_w %}
+    <main class="flex-1 overflow-y-auto bg-slate-50 py-6 px-4 lg:px-8">
+      <div class="max-w-2xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+        {% include "planner/partials/_task_panel_body.html" %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

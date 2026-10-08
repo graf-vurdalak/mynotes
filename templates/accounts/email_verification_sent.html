@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load static %}
+{% load socialaccount %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'auth.verify_email' %} — {% app_name %}{% endblock %}
+
+{% block content %}
+<body class="bg-slate-50 min-h-screen flex items-center justify-center p-4">
+  <div class="w-full max-w-md">
+    <div class="bg-white rounded-2xl shadow-xl p-8 text-center">
+      <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+        <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <h1 class="text-2xl font-bold text-slate-900 mb-2">{% t 'auth.verify_email' %}</h1>
+      <p class="text-slate-500">{% t 'auth.verification_sent' %}</p>
+      <a href="{% url 'login' %}" class="inline-block mt-6 text-blue-600 hover:text-blue-700 font-medium">
+        {% t 'auth.login' %} &rarr;
+      </a>
+    </div>
+  </div>
+</body>
+{% endblock %}

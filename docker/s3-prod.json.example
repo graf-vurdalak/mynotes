@@ -1,0 +1,25 @@
+{
+  "signingKey": "REPLACE_SIGNING_KEY_generate_random_secret",
+  "identities": [
+    {
+      "name": "app",
+      "credentials": [
+        {
+          "accessKey": "REPLACE_APP_ACCESS_KEY",
+          "secretKey": "REPLACE_APP_SECRET_KEY"
+        }
+      ],
+      "actions": ["Read:mynotes", "List:mynotes", "Write:mynotes"]
+    },
+    {
+      "name": "admin",
+      "credentials": [
+        {
+          "accessKey": "REPLACE_ADMIN_ACCESS_KEY",
+          "secretKey": "REPLACE_ADMIN_SECRET_KEY"
+        }
+      ],
+      "actions": ["Admin", "Read", "List", "Write", "Tagging"]
+    }
+  ]
+}

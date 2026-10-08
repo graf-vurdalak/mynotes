@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'insurance.new' %}{% else %}{% t 'insurance.edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden" x-data="insuranceForm()">
+
+  {% include "partials/_sidebar.html" with active_page='vehicles' %}
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">{{ vehicle }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% if is_new %}{% t 'insurance.new' %}{% else %}{% t 'insurance.edit' %}{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="hidden sm:inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition">
+          {% t 'vehicle.cancel' %}
+        </a>
+        <button form="insurance-form" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% if is_new %}{% t 'insurance.add' %}{% else %}{% t 'insurance.save' %}{% endif %}
+        </button>
+      </div>
+    </header>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="px-4 lg:px-8 pt-4 max-w-5xl mx-auto w-full">
+          <div class="px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ message }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-5xl mx-auto">
+
+        <div class="sm:hidden mb-5">
+          <h1 class="text-2xl font-bold text-slate-900">{% if is_new %}{% t 'insurance.new' %}{% else %}{% t 'insurance.edit' %}{% endif %}</h1>
+          <p class="text-sm text-slate-500 mt-1">{{ vehicle }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 mb-5">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post" id="insurance-form" enctype="multipart/form-data" class="space-y-5">
+          {% csrf_token %}
+          <input type="hidden" name="tab" id="form_tab" value="{{ tab }}">
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+            <!-- ============ ЛЕВАЯ КОЛОНКА: ФОРМА ============ -->
+            <div class="xl:col-span-2 space-y-5">
+
+              <!-- Блок 1: Основные данные -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
+                  </span>
+                  {% t 'insurance.basic' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.vehicle.label }}</label>
+                    {{ form.vehicle }}
+                    {% for error in form.vehicle.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'insurance.type' %}</label>
+                    {{ form.insurance_type }}
+                    {% for error in form.insurance_type.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'insurance.company' %}</label>
+                    {{ form.company }}
+                    {% for error in form.company.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'insurance.policy_number' %}</label>
+                    {{ form.policy_number }}
+                    {% for error in form.policy_number.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'insurance.start_date' %}</label>
+                    {{ form.start_date }}
+                    {% for error in form.start_date.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                      {% t 'insurance.end_date' %}
+                      <span class="text-slate-400 font-normal">({% t 'insurance.optional' %})</span>
+                    </label>
+                    {{ form.end_date }}
+                    {% for error in form.end_date.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'insurance.renewed_by' %}</label>
+                    {{ form.renewed_by }}
+                    {% for error in form.renewed_by.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                      {% t 'insurance.cost' %}
+                      <span class="text-slate-400 font-normal">· ₽</span>
+                    </label>
+                    {{ form.cost }}
+                    {% for error in form.cost.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 2: Фото полиса -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  </span>
+                  {% t 'insurance.photo' %} <span class="text-slate-400 font-normal">({% t 'insurance.optional' %})</span>
+                </h2>
+
+                {% if insurance and insurance.photo %}
+                <div class="mb-2 bg-slate-50 rounded-xl p-2">
+                  <img src="{{ insurance.photo.url }}" class="w-24 h-16 object-contain rounded-lg" alt="">
+                </div>
+                {% endif %}
+                <label class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-4 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30 block">
+                  <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                  <div class="text-sm font-medium text-slate-700">{% t 'insurance.photo_hint' %}</div>
+                  <div class="text-xs text-slate-500 mt-1">{% t 'cln.image_hint' %}</div>
+                  {{ form.photo }}
+                </label>
+                {% for error in form.photo.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+              </div>
+
+              <!-- Блок 3: Напоминание -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21a2 2 0 11-14 0 7 7 0 0114 0z"/></svg>
+                  </span>
+                  {% t 'insurance.reminder' %}
+                </h2>
+                <label class="flex items-center gap-3 p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                  {{ form.reminder_created }}
+                  <div>
+                    <div class="text-sm font-medium text-slate-900">{% t 'insurance.reminder_label' %}</div>
+                    <div class="text-xs text-slate-500">{% t 'insurance.reminder_hint' %}</div>
+                  </div>
+                </label>
+                {% for error in form.reminder_created.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+              </div>
+
+              <!-- Нижние кнопки (для мобильных) -->
+              <div class="flex flex-col sm:flex-row gap-2 sm:hidden">
+                <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg transition text-center">
+                  {% t 'vehicle.cancel' %}
+                </a>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+                  {% if is_new %}{% t 'insurance.add' %}{% else %}{% t 'insurance.save' %}{% endif %}
+                </button>
+              </div>
+
+            </div>
+
+            <!-- ============ ПРАВАЯ КОЛОНКА: ИТОГИ ============ -->
+            <div class="xl:col-span-1 space-y-4">
+
+              <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
+                <div class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                  </svg>
+                  <h3 class="font-semibold">{% t 'insurance.cost' %}</h3>
+                </div>
+                <div class="text-4xl font-bold mb-1" x-text="cost ? Number(cost).toFixed(2) : '0.00'"></div>
+                <div class="text-sm text-blue-100">₽</div>
+              </div>
+
+              <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <div class="flex gap-3">
+                  <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                  <div class="text-xs text-amber-900">
+                    <div class="font-semibold mb-1">{% t 'insurance.tip' %}</div>
+                    <div>{% t 'insurance.tip_text' %}</div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </form>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var __currentTab = '{{ tab|default:"insurance" }}';
+(function() { var el = document.getElementById('form_tab'); if (el && typeof __currentTab !== 'undefined') el.value = __currentTab; })();
+function insuranceForm() {
+  return {
+    cost: "{% if form.cost.value %}{{ form.cost.value|stringformat:'.2f' }}{% else %}''{% endif %}"
+  };
+}
+</script>
+{% endblock %}

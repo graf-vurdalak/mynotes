@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'service.new' %}{% else %}{% t 'service.edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='vehicles' %}
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">{{ vehicle }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% if is_new %}{% t 'service.new' %}{% else %}{% t 'service.edit' %}{% endif %}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="hidden sm:inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition">
+          {% t 'vehicle.cancel' %}
+        </a>
+        <button form="service-form" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          {% if is_new %}{% t 'service.add' %}{% else %}{% t 'service.save' %}{% endif %}
+        </button>
+      </div>
+    </header>
+
+    {% if messages %}
+      {% for message in messages %}
+        <div class="px-4 lg:px-8 pt-4 max-w-5xl mx-auto w-full">
+          <div class="px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ message }}</div>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-5xl mx-auto">
+
+        <div class="sm:hidden mb-5">
+          <h1 class="text-2xl font-bold text-slate-900">{% if is_new %}{% t 'service.new' %}{% else %}{% t 'service.edit' %}{% endif %}</h1>
+          <p class="text-sm text-slate-500 mt-1">{{ vehicle }}{% if vehicle.license_plate %} · {{ vehicle.license_plate }}{% endif %}</p>
+        </div>
+
+        {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-700 mb-5">
+          {{ form.non_field_errors }}
+        </div>
+        {% endif %}
+
+        <form method="post" id="service-form" enctype="multipart/form-data" class="space-y-5">
+          {% csrf_token %}
+          <input type="hidden" name="tab" id="form_tab" value="{{ tab }}">
+
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+            <!-- ============ ЛЕВАЯ КОЛОНКА: ФОРМА ============ -->
+            <div class="xl:col-span-2 space-y-5">
+
+              <!-- Блок 1: Основные данные -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                  </span>
+                  {% t 'service.basic' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.vehicle.label }}</label>
+                    {{ form.vehicle }}
+                    {% for error in form.vehicle.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.service_date.label }}</label>
+                    {{ form.service_date }}
+                    {% for error in form.service_date.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.service_station.label }}</label>
+                    {{ form.service_station }}
+                    {% for error in form.service_station.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.order_document.label }} <span class="text-slate-400 font-normal">({% t 'service.optional' %})</span></label>
+                    {{ form.order_document }}
+                    {% for error in form.order_document.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ form.work_description.label }}</label>
+                    {{ form.work_description }}
+                    {% for error in form.work_description.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 2: Стоимость и пробег -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </span>
+                  {% t 'service.finance' %}
+                </h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                      {{ form.amount.label }}
+                      <span class="text-slate-400 font-normal">· ₽</span>
+                    </label>
+                    {{ form.amount }}
+                    {% for error in form.amount.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                      {{ form.odometer.label }}
+                      <span class="text-slate-400 font-normal">· {% t 'service.km' %}</span>
+                    </label>
+                    {{ form.odometer }}
+                    {% for error in form.odometer.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Блок 3: Фото -->
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+                <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                  <span class="w-8 h-8 rounded-lg bg-rose-50 flex items-center justify-center">
+                    <svg class="w-4 h-4 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                    </svg>
+                  </span>
+                  {% t 'service.photos_title' %}
+                </h2>
+
+                {% if service %}
+                <div class="mb-3 grid grid-cols-4 sm:grid-cols-6 gap-2">
+                  {% for photo in service.photos.all %}
+                  <div class="relative aspect-square rounded-lg bg-slate-50 border border-slate-200 overflow-hidden">
+                    <img src="{{ photo.image.url }}" class="w-full h-full object-cover" alt="">
+                  </div>
+                  {% endfor %}
+                </div>
+                {% endif %}
+
+                <label class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-4 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30 block">
+                  <svg class="w-8 h-8 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                  </svg>
+                  <div class="text-sm font-medium text-slate-700">{% t 'service.photos_hint' %}</div>
+                  <div class="text-xs text-slate-500 mt-1">{% t 'cln.image_hint_service' %} {% t 'service.photo_limit' %}</div>
+                  {{ form.photos }}
+                </label>
+                {% for error in form.photos.errors %}<p class="text-xs text-red-600 mt-1">{{ error }}</p>{% endfor %}
+              </div>
+
+              <!-- Нижние кнопки (для мобильных) -->
+              <div class="flex flex-col sm:flex-row gap-2 sm:hidden">
+                <a href="{% url 'vehicles:detail' vehicle.pk %}?tab={{ tab }}" class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg transition text-center">
+                  {% t 'vehicle.cancel' %}
+                </a>
+                <button type="submit" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+                  {% if is_new %}{% t 'service.add' %}{% else %}{% t 'service.edit' %}{% endif %}
+                </button>
+              </div>
+
+            </div>
+
+            <!-- ============ ПРАВАЯ КОЛОНКА: ПОДСКАЗКИ ============ -->
+            <div class="xl:col-span-1 space-y-4">
+
+              <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-5 text-white">
+                <div class="flex items-center gap-2 mb-3">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                  </svg>
+                  <h3 class="font-semibold">{% t 'service.tip' %}</h3>
+                </div>
+                <div class="text-sm text-purple-100">{% t 'service.tip_text' %}</div>
+              </div>
+
+              <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+                <div class="text-xs text-amber-900">
+                  <div class="font-semibold mb-1">{% t 'service.photo_tip' %}</div>
+                  <div>{% t 'service.photo_tip_text' %}</div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </form>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+var __currentTab = '{{ tab|default:"service" }}';
+(function() { var el = document.getElementById('form_tab'); if (el && typeof __currentTab !== 'undefined') el.value = __currentTab; })();
+</script>
+{% endblock %}

@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'settings.title' %} — {% app_name %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='settings' %}
+
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <div>
+          <div class="text-xs text-slate-500">{% t 'settings.lc' %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% t 'settings.title' %} · {% t 'settings.profile' %}</div>
+        </div>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto">
+      <div class="max-w-6xl mx-auto p-4 lg:p-8">
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium {% if message.tags == 'error' %}bg-red-50 border border-red-200 text-red-700{% else %}bg-emerald-50 border border-emerald-200 text-emerald-800{% endif %}">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <div class="flex flex-col lg:flex-row gap-6">
+
+          <aside class="lg:w-64 flex-shrink-0">
+            {% include "partials/_settings_menu.html" with settings_tab='profile' %}
+          </aside>
+
+          <div class="flex-1 space-y-6">
+
+            <!-- ============ ПРОФИЛЬ ============ -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-100">
+                <h2 class="text-lg font-semibold text-slate-900">{% t 'settings.profile' %}</h2>
+                <p class="text-sm text-slate-500 mt-0.5">{% t 'settings.profile_help' %}</p>
+              </div>
+              <form method="post" enctype="multipart/form-data" class="p-6 space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="profile">
+
+                <div class="flex items-center gap-4">
+                  {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="" class="w-16 h-16 rounded-full object-cover">
+                  {% else %}
+                    <div class="w-16 h-16 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-bold text-xl">{{ user.initials }}</div>
+                  {% endif %}
+                  <div>
+                    <label class="inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-700 bg-white border border-slate-200 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+                      {% t 'settings.avatar_upload' %}
+                      {{ profile_form.avatar }}
+                    </label>
+                    <p class="text-xs text-slate-500 mt-1.5">{% t 'settings.avatar_note' %}</p>
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'auth.display_name' %}</label>
+                    {{ profile_form.display_name }}
+                    {% for error in profile_form.display_name.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'auth.email' %}</label>
+                    <div class="relative">
+                      <input type="email" value="{{ user.email }}" disabled class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2.5 text-sm text-slate-500">
+                      {% if user.email_verified %}
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 bg-emerald-100 text-emerald-700 text-xs font-semibold px-2 py-0.5 rounded-full">{% t 'settings.email_verified_badge' %}</span>
+                      {% else %}
+                        <span class="absolute right-3 top-1/2 -translate-y-1/2 bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full">{% t 'settings.email_pending_badge' %}</span>
+                      {% endif %}
+                    </div>
+                    <p class="text-xs text-slate-500 mt-1.5">{% t 'settings.email_new_note' %}</p>
+                  </div>
+                </div>
+
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">{{ profile_form.new_email.label }}</label>
+                  {{ profile_form.new_email }}
+                  {% for error in profile_form.new_email.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                  <div class="bg-blue-50 border border-blue-200 rounded-lg p-3 mt-2 flex gap-2">
+                    <svg class="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="text-xs text-blue-900">{% t 'settings.email_change_hint' %}</div>
+                  </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                  <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    {% t 'settings.save_profile' %}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- ============ ПРИЛОЖЕНИЕ ============ -->
+            <div class="bg-white rounded-xl border border-slate-200 overflow-hidden">
+              <div class="px-6 py-4 border-b border-slate-100">
+                <h2 class="text-lg font-semibold text-slate-900">{% t 'settings.app' %}</h2>
+                <p class="text-sm text-slate-500 mt-0.5">{% t 'settings.app_help' %}</p>
+              </div>
+              <form method="post" class="p-6 space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="app">
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.language' %}</label>
+                    {{ app_form.language }}
+                    <p class="text-xs text-slate-500 mt-1.5">{% t 'settings.language_note' %}</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.currency' %}</label>
+                    {{ app_form.default_currency }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.timezone' %}</label>
+                    {{ app_form.timezone }}
+                    {% for error in app_form.timezone.errors %}<p class="text-red-500 text-xs mt-1">{{ error }}</p>{% endfor %}
+                  </div>
+                </div>
+
+                <label class="flex items-center justify-between bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 cursor-pointer">
+                  <span class="text-sm font-medium text-slate-700">{% t 'settings.dark_theme' %}</span>
+                  {{ app_form.dark_theme }}
+                </label>
+
+                <div class="flex justify-end pt-2">
+                  <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    {% t 'settings.save_settings' %}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            <!-- ============ НАПОМИНАНИЯ ============ -->
+            <div id="notifications" class="bg-white rounded-xl border border-slate-200 overflow-hidden scroll-mt-6">
+              <div class="px-6 py-4 border-b border-slate-100">
+                <h2 class="text-lg font-semibold text-slate-900">{% t 'settings.notifications' %}</h2>
+                <p class="text-sm text-slate-500 mt-0.5">{% t 'settings.notifications_help' %}</p>
+              </div>
+              <form method="post" class="p-6 space-y-5">
+                {% csrf_token %}
+                <input type="hidden" name="section" value="reminders">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.reminder_default' %}</label>
+                    {{ reminders_form.reminder_default_minutes }}
+                    <p class="text-xs text-slate-500 mt-1.5">{{ reminders_form.reminder_default_minutes.help_text }}</p>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.insurance_days' %}</label>
+                    {{ reminders_form.insurance_reminder_days }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.plan_days' %}</label>
+                    {{ reminders_form.plan_reminder_days }}
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1.5">{% t 'settings.tax_date' %}</label>
+                    <div class="flex gap-2">
+                      {{ reminders_form.transport_tax_month }}
+                      {{ reminders_form.transport_tax_day }}
+                    </div>
+                  </div>
+                </div>
+
+                <div class="flex justify-end pt-2">
+                  <button type="submit" class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+                    {% t 'settings.save_reminders' %}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}

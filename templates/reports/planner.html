@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'rep.planner.title' %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='reports' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8">
+      <div>
+        <div class="text-xs text-slate-500">{% t 'rep.planner.crumb' %}</div>
+        <div class="text-sm font-semibold text-slate-900">{% t 'rep.planner.title' %}</div>
+      </div>
+      <div class="flex gap-2">
+        <a href="{% url 'reports:export_xlsx' 'planner_report' %}?{{ request.GET.urlencode }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100 transition">{% t 'exp.excel' %}</a>
+        <a href="{% url 'reports:export_pdf' 'planner_report' %}?{{ request.GET.urlencode }}" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-red-700 bg-red-50 hover:bg-red-100 transition">{% t 'exp.pdf' %}</a>
+      </div>
+    </header>
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div class="max-w-6xl mx-auto space-y-6">
+
+        {% url 'reports:planner' as planner_url %}
+        <!-- Фильтры: скоуп + период + проект -->
+        <div class="bg-white rounded-xl border border-slate-200 p-4 flex flex-wrap items-end gap-3">
+          <div>
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.scope.title' %}</div>
+            <div class="flex gap-1">
+              <a href="{{ planner_url }}?scope=work&period={{ period }}" class="px-3 py-1.5 rounded-full text-sm {% if scope_code == 'work' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.scope.work' %}</a>
+              <a href="{{ planner_url }}?scope=personal&period={{ period }}" class="px-3 py-1.5 rounded-full text-sm {% if scope_code == 'personal' %}bg-slate-900 text-white{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{% t 'rep.scope.personal' %}</a>
+            </div>
+          </div>
+          <div>
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.period' %}</div>
+            <div class="flex gap-1 flex-wrap">
+              {% for key, label in periods %}
+                <a href="{{ planner_url }}?scope={{ scope_code }}&period={{ key }}{% if project_selected %}&project={{ project_selected }}{% endif %}" class="px-3 py-1.5 rounded-full text-sm {% if period == key %}bg-emerald-50 text-emerald-700 border border-emerald-200{% else %}bg-white text-slate-600 border border-slate-200 hover:bg-slate-100{% endif %}">{{ label }}</a>
+              {% endfor %}
+            </div>
+          </div>
+          {% if period == 'custom' %}
+          <form method="get" class="flex items-end gap-2">
+            <input type="hidden" name="scope" value="{{ scope_code }}">
+            <input type="hidden" name="period" value="custom">
+            {% if project_selected %}<input type="hidden" name="project" value="{{ project_selected }}">{% endif %}
+            <div>
+              <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.custom_hint' %}</div>
+              <input type="date" name="start" value="{{ start|date:'Y-m-d' }}" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
+            </div>
+            <div>
+              <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.custom_end' %}</div>
+              <input type="date" name="end" value="{{ end|date:'Y-m-d' }}" class="border border-slate-200 rounded-lg px-2 py-1.5 text-sm">
+            </div>
+            <button class="px-3 py-1.5 rounded-lg text-sm font-medium text-emerald-700 bg-emerald-50 hover:bg-emerald-100">{% t 'rep.filter.apply' %}</button>
+          </form>
+          {% endif %}
+          <form method="get" class="ml-auto">
+            <input type="hidden" name="scope" value="{{ scope_code }}">
+            <input type="hidden" name="period" value="{{ period }}">
+            {% if period == 'custom' and start %}<input type="hidden" name="start" value="{{ start|date:'Y-m-d' }}">{% endif %}
+            {% if period == 'custom' and end %}<input type="hidden" name="end" value="{{ end|date:'Y-m-d' }}">{% endif %}
+            <div>
+              <div class="text-xs text-slate-500 mb-1">{% t 'rep.filter.project' %}</div>
+              <select name="project" onchange="this.form.submit()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-sm text-slate-700 focus:ring-2 focus:ring-emerald-500">
+                <option value="">{% t 'rep.project.all' %}</option>
+                {% for p in all_projects %}
+                  <option value="{{ p.pk }}" {% if project_selected == p.pk|stringformat:'s' %}selected{% endif %}>{{ p.title }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </form>
+        </div>
+
+        <!-- KPI -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.total_tasks' %}</div>
+            <div class="text-lg font-bold text-slate-900">{{ report.kpi.total }}</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.done_overdue' %}</div>
+            <div class="text-lg font-bold text-slate-900">{{ report.kpi.done }} / {{ report.kpi.overdue }}</div>
+            <div class="text-xs text-slate-500 mt-1">{{ report.on_time.pct }}%</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.avg_cycle' %}</div>
+            <div class="text-lg font-bold text-slate-900">{% if report.kpi.avg_cycle %}{{ report.kpi.avg_cycle }} <span class="text-sm font-normal text-slate-500">{% t 'rep.kpi.unit_days' %}</span>{% else %}—{% endif %}</div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="text-xs text-slate-500 mb-1">{% t 'rep.kpi.hours' %}</div>
+            <div class="text-lg font-bold text-slate-900">{{ report.kpi.hours_fact }} / {{ report.kpi.hours_est }}</div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.statuses' %}</h3>
+            {% if report.by_status %}<div id="chart-statuses"></div>
+            {% else %}<div class="text-sm text-slate-400 py-8 text-center">{% t 'rep.planner.empty' %}</div>{% endif %}
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <div class="flex items-center justify-between mb-4">
+              <h3 class="text-sm font-semibold text-slate-900">{% t 'rep.chart.burndown' %}</h3>
+              {% if burndown %}<span class="text-xs text-slate-500">{{ burndown.project_title }}</span>{% endif %}
+            </div>
+            {% if burndown %}<div id="chart-burndown"></div>
+            {% else %}<div class="text-sm text-slate-400 py-8 text-center">{% t 'rep.burndown.none' %}</div>{% endif %}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.weekly' %}</h3>
+            {% if report.weekly %}<div id="chart-weekly"></div>
+            {% else %}<div class="text-sm text-slate-400 py-8 text-center">{% t 'rep.planner.empty' %}</div>{% endif %}
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.avg_status' %}</h3>
+            {% if report.avg_status %}
+            <div class="space-y-3">
+              {% for row in report.avg_status %}
+              <div>
+                <div class="flex justify-between text-sm mb-1">
+                  <span class="text-slate-700">{{ row.name }}</span>
+                  <span class="font-semibold text-slate-900">{{ row.days }} {% t 'rep.kpi.unit_days' %}</span>
+                </div>
+                <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden">
+                  <div class="h-full rounded-full" style="width: {{ row.bar_pct }}%; background: {{ row.color }}"></div>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-sm text-slate-400 py-8 text-center">{% t 'rep.planner.empty' %}</div>
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.top.longest' %}</h3>
+            {% if top %}
+            <div class="space-y-2.5 text-sm">
+              {% for item in top %}
+              <div class="flex items-center gap-3">
+                <span class="w-5 text-xs text-slate-400">{{ forloop.counter }}.</span>
+                {% if scope_code == 'work' %}
+                <a href="{% url 'planner:task' item.pk %}" class="flex-1 truncate text-slate-700 hover:text-emerald-700">{{ item.title }}</a>
+                {% else %}
+                <span class="flex-1 truncate text-slate-700">{{ item.title }}</span>
+                {% endif %}
+                {% if item.project %}<span class="text-slate-400 text-xs truncate max-w-[10rem]">{{ item.project }}</span>{% endif %}
+                <span class="font-semibold {% if item.days > 14 %}text-red-600{% elif item.days > 7 %}text-amber-600{% else %}text-slate-900{% endif %}">{{ item.days }} {% t 'rep.kpi.unit_days' %}</span>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-sm text-slate-400 py-8 text-center">{% t 'rep.planner.empty' %}</div>
+            {% endif %}
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-5">
+            <h3 class="text-sm font-semibold text-slate-900 mb-4">{% t 'rep.chart.on_time' %}</h3>
+            <div id="chart-on-time"></div>
+            <div class="mt-3 pt-3 border-t border-slate-100 grid grid-cols-3 gap-2 text-center text-xs">
+              <div><div class="text-emerald-600 font-bold text-lg">{{ report.on_time.done_on_time }}</div>{% t 'rep.row.on_time' %}</div>
+              <div><div class="text-red-600 font-bold text-lg">{{ report.on_time.done_late }}</div>{% t 'rep.row.late' %}</div>
+              <div><div class="text-amber-600 font-bold text-lg">{{ report.on_time.overdue_open }}</div>{% t 'rep.row.overdue_open' %}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/apexcharts@3.45.2"></script>
+{{ charts|json_script:"report-charts" }}
+<script>
+  (function () {
+    const data = JSON.parse(document.getElementById('report-charts').textContent);
+    const base = {
+      chart: { toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent', animations: { enabled: true } },
+      grid: { borderColor: '#E2E8F0', strokeDashArray: 4 },
+      tooltip: { theme: 'light' },
+      dataLabels: { enabled: false },
+      legend: { position: 'bottom' },
+    };
+    if (data.statuses.labels.length) {
+      new ApexCharts(document.querySelector('#chart-statuses'), Object.assign({}, base, {
+        chart: { type: 'bar', height: 260, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+        series: data.statuses.series,
+        colors: data.statuses.colors,
+        xaxis: { categories: data.statuses.labels, labels: { style: { colors: '#94A3B8', fontSize: '11px' } } },
+        plotOptions: { bar: { columnWidth: '50%', borderRadius: 3 } },
+      })).render();
+    }
+    if (data.burndown) {
+      new ApexCharts(document.querySelector('#chart-burndown'), Object.assign({}, base, {
+        chart: { type: 'line', height: 260, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+        series: data.burndown.series,
+        colors: data.burndown.colors,
+        xaxis: { categories: data.burndown.labels, labels: { style: { colors: '#94A3B8', fontSize: '11px' } } },
+        stroke: { curve: 'straight', width: 3, dashArray: [0, 5] },
+        markers: { size: 3 },
+      })).render();
+    }
+    if (data.weekly.labels.length) {
+      new ApexCharts(document.querySelector('#chart-weekly'), Object.assign({}, base, {
+        chart: { type: 'bar', height: 260, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+        series: data.weekly.series,
+        colors: data.weekly.colors,
+        xaxis: { categories: data.weekly.labels, labels: { style: { colors: '#94A3B8', fontSize: '11px' } } },
+        plotOptions: { bar: { columnWidth: '45%', borderRadius: 3 } },
+      })).render();
+    }
+    new ApexCharts(document.querySelector('#chart-on-time'), Object.assign({}, base, {
+      chart: { type: 'donut', height: 220, toolbar: { show: false }, fontFamily: 'Inter, sans-serif', background: 'transparent' },
+      series: data.on_time.series,
+      labels: data.on_time.labels,
+      colors: data.on_time.colors,
+      stroke: { width: 0 },
+      legend: { show: false },
+    })).render();
+  })();
+</script>
+{% endblock %}

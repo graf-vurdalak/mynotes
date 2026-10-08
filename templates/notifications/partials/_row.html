@@ -1,0 +1,21 @@
+{% load i18n_lang %}
+<div id="notif-{{ n.pk }}" class="bg-white rounded-xl border border-slate-200 p-4 mb-3 flex gap-3 {% if not n.is_read %}shadow-sm border-l-4 border-l-blue-600{% else %}bg-white/60{% endif %}">
+  <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center flex-shrink-0">
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h-3a2 2 0 110-4h3m-9 4h.01M5 21V5a2 2 0 012-2h10a2 2 0 012 2v16l-3.5-2.5L12 21l-3.5-2.5L5 21z"/></svg>
+  </div>
+  <div class="flex-1 min-w-0">
+    <div class="flex items-center justify-between gap-2">
+      <div class="{% if not n.is_read %}font-semibold text-slate-900{% else %}font-medium text-slate-500{% endif %} truncate">{{ n.title }}</div>
+      {% if not n.is_read %}
+        <form method="post" hx-post="{% url 'notifications:mark_read' n.pk %}" hx-target="#notif-{{ n.pk }}" hx-swap="outerHTML">
+          {% csrf_token %}
+          <button class="text-xs text-blue-600 hover:underline whitespace-nowrap">{% t 'notif.mark_read' %}</button>
+        </form>
+      {% endif %}
+    </div>
+    {% if n.message %}<div class="text-sm {% if not n.is_read %}text-slate-600{% else %}text-slate-400{% endif %} mt-0.5">{{ n.message }}</div>{% endif %}
+    <div class="text-xs text-slate-400 mt-1">
+      {{ n.created_at|date:"d.m.Y H:i" }} · {% if n.sent_via_email %}{% t 'notif.via.email' %} ✓{% endif %}{% if n.sent_via_email and n.sent_via_telegram %} · {% endif %}{% if n.sent_via_telegram %}{% t 'notif.via.telegram' %} ✓{% endif %}
+    </div>
+  </div>
+</div>

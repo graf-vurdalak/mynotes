@@ -1,0 +1,184 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-mynotes}
+      POSTGRES_USER: ${POSTGRES_USER:-mynotes}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-mynotes}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-mynotes}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # S3-хранилище файлов (Этап «MinIO» → SeaweedFS S3: публичные образы MinIO удалены
+  # из реестров, репозиторий архивирован 25.04.2026). Один процесс master+volume+filer+s3.
+  # API только внутри docker-сети (s3:8333) — наружу не публикуется; приватные файлы
+  # отдаёт приложение через authorized-proxy /media/<ключ> (apps/core/views.media_file).
+  # Dev-credentials: env-фолбэк администратора гейтвея (без config-файла), bucket
+  # фиксирован mynotes-dev (отделён от prod), авто-создание при первой загрузке.
+  s3:
+    image: chrislusf/seaweedfs:4.48
+    command: server -s3 -s3.port=8333 -ip=s3 -dir=/data
+    environment:
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-mynotes_dev}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-mynotes_dev_secret}
+    volumes:
+      - s3_data:/data
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:9333/"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  web:
+    image: mynotes-web
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+      args:
+        # Явно указываем собирать dev-зависимости для локальной разработки
+        REQUIREMENTS_FILE: requirements/dev.txt
+    command: python manage.py runserver 0.0.0.0:8001
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings.dev # <-- ВАЖНО: явно указываем dev настройки
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+      # SMTP настраивается в .env: реальный сервер либо (пустой EMAIL_HOST) фолбэк на mailhog:1025
+      # Файлы (ImageField/FileField/BotUpload) — через S3-backend поверх SeaweedFS в docker-сети.
+      - S3_ENDPOINT=http://s3:8333
+      - S3_BUCKET=mynotes-dev
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY:-mynotes_dev}
+      - S3_SECRET_KEY=${S3_SECRET_KEY:-mynotes_dev_secret}
+      - S3_REGION=${S3_REGION:-us-east-1}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+
+  worker:
+    image: mynotes-web
+    command: celery -A config worker --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+      # Файловые операции в задачах (отчёты/PDF с фото) идут через тот же S3-backend.
+      - S3_ENDPOINT=http://s3:8333
+      - S3_BUCKET=mynotes-dev
+      - S3_ACCESS_KEY=${S3_ACCESS_KEY:-mynotes_dev}
+      - S3_SECRET_KEY=${S3_SECRET_KEY:-mynotes_dev_secret}
+      - S3_REGION=${S3_REGION:-us-east-1}
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      s3:
+        condition: service_healthy
+    restart: unless-stopped
+
+  beat:
+    image: mynotes-web
+    command: celery -A config beat --loglevel=info
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+
+  e2e:
+    profiles: ["testing"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.e2e
+    init: true
+    shm_size: 1gb
+    command: ["pytest", "-q", "tests/e2e"]
+    volumes:
+      - .:/app
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=config.settings.dev
+      - POSTGRES_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  # Боты запускаются отдельно: docker compose -f docker-compose.dev.yml --profile bots up bot_vehicle
+  bot_vehicle:
+    profiles: ["bots"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bot
+    command: python -m telegram_bots.vehicle_bot.main
+    volumes:
+      - .:/app
+      - bot_state:/data
+    environment:
+      - TELEGRAM_VEHICLE_BOT_TOKEN=${TELEGRAM_VEHICLE_BOT_TOKEN}
+      - BOT_STATE_DB=/data/vehicle.db
+    depends_on:
+      - web
+
+  bot_planner:
+    profiles: ["bots"]
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.bot
+    command: python -m telegram_bots.planner_bot.main
+    volumes:
+      - .:/app
+      - bot_state:/data
+    environment:
+      - TELEGRAM_PLANNER_BOT_TOKEN=${TELEGRAM_PLANNER_BOT_TOKEN}
+      - BOT_STATE_DB=/data/planner.db
+    depends_on:
+      - web
+
+volumes:
+  postgres_data:
+  bot_state:
+  s3_data:

@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% if is_new %}{% t 'pl.event_new' %}{% else %}{% t 'pl.event_edit' %}{% endif %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% if is_new %}{% t 'pl.event_new' as header_ttl %}{% else %}{% t 'pl.event_edit' as header_ttl %}{% endif %}
+    {% t 'pl.scope_personal' as crumb_p %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl header_crumb=crumb_p %}
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <form method="post" class="max-w-3xl mx-auto space-y-6" id="event-form">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.GET.next }}">
+        {% if form.non_field_errors %}<div class="bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg p-3">{{ form.non_field_errors }}</div>{% endif %}
+
+        <!-- Заголовок + описание -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
+          <div>
+            <label class="field-label" for="{{ form.title.id_for_label }}">{% t 'pl.field_title' %} <span class="text-red-500">*</span></label>
+            {{ form.title }}
+            {% for e in form.title.errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.description.id_for_label }}">{% t 'pl.field_description' %}</label>
+            {{ form.description }}
+          </div>
+        </div>
+
+        <!-- Дата/время + место -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label">{% t 'pl.field_start' %} <span class="text-red-500">*</span></label>
+            <div class="flex gap-2">
+              {{ form.date_start }}{{ form.time_start }}
+            </div>
+            <label class="inline-flex items-center gap-2 mt-2 text-sm text-slate-600">{{ form.all_day }} {% t 'pl.all_day' %}</label>
+            {% for e in form.date_start.errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+          </div>
+          <div>
+            <label class="field-label">{% t 'pl.field_end' %}</label>
+            <div class="flex gap-2">{{ form.date_end }}{{ form.time_end }}</div>
+            {% for e in form.non_field_errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+          </div>
+          <div class="md:col-span-2">
+            <label class="field-label" for="{{ form.location.id_for_label }}">{% t 'pl.field_location' %}</label>
+            {{ form.location }}
+          </div>
+        </div>
+
+        <!-- Проект / приоритет / теги -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label" for="{{ form.project.id_for_label }}">{% t 'pl.field_project' %}</label>
+            {{ form.project }}
+          </div>
+          <div>
+            <label class="field-label" for="{{ form.priority.id_for_label }}">{% t 'pl.field_priority' %}</label>
+            {{ form.priority }}
+          </div>
+          <div class="md:col-span-2">
+            <label class="field-label" for="{{ form.tags.id_for_label }}">{% t 'pl.field_tags' %}</label>
+            {{ form.tags }}
+            <p class="text-xs text-slate-400 mt-1">{% t 'pl.tags_hint' %}</p>
+          </div>
+        </div>
+
+        <!-- Повторение + напоминание -->
+        <div class="bg-white rounded-xl border border-slate-200 p-5 grid md:grid-cols-2 gap-4">
+          <div>
+            <label class="field-label" for="{{ form.recurrence.id_for_label }}">{% t 'pl.recurrence' %}</label>
+            {{ form.recurrence }}
+            <div class="mt-2" x-data="{ rec: '{{ form.recurrence.value|default:"" }}' }"
+                 x-init="$watch(() => document.getElementById('{{ form.recurrence.id_for_label }}').value, v => rec = v)">
+              <div x-show="rec === 'weekdays'" class="flex flex-wrap gap-2 mb-2">
+                {% for cb in form.recurrence_byday %}<label class="inline-flex items-center gap-1 text-xs text-slate-600">{{ cb.tag }}{{ cb.choice_label }}</label>{% endfor %}
+              </div>
+              <div x-show="rec === 'interval'" class="mb-2">
+                <label class="text-xs text-slate-500">{% t 'pl.interval_days' %}</label>
+                {{ form.recurrence_interval }}
+              </div>
+            </div>
+            <div class="mt-2 flex items-center gap-2">
+              <label class="text-xs text-slate-500">{% t 'pl.repeat_until' %}</label>
+              {{ form.recurrence_until }}
+            </div>
+            {% for e in form.recurrence.errors %}<p class="field-errors">{{ e }}</p>{% endfor %}
+          </div>
+          <div>
+            <label class="field-label">{% t 'pl.reminder' %}</label>
+            <label class="inline-flex items-center gap-2 text-sm text-slate-600 mb-2">
+              {{ form.reminder_enabled }} {% t 'pl.reminder_enable' %}
+            </label>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-slate-500">{% t 'pl.reminder_before' %}</span>{{ form.reminder_minutes }}
+              <span class="text-sm text-slate-500">{% t 'pl.unit_minutes' %}</span>
+            </div>
+            <p class="text-xs text-slate-400 mt-2">{% t 'pl.reminder_default_hint' %}</p>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pb-8">
+          {% if not is_new %}
+            <button type="button" onclick="document.getElementById('event-delete-form').submit()" class="mr-auto text-sm text-red-600 hover:underline">{% t 'pl.delete' %}</button>
+          {% endif %}
+          <a href="{% url 'planner:personal' %}" class="px-4 py-2 rounded-lg text-sm font-medium text-slate-600 hover:bg-slate-100 transition">{% t 'pl.cancel' %}</a>
+          <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow-md transition">{% t 'pl.save' %}</button>
+        </div>
+      </form>
+      {% if not is_new %}
+      <form method="post" id="event-delete-form" action="{% url 'planner:event_delete' event.pk %}" class="hidden">
+        {% csrf_token %}<input type="hidden" name="next" value="{{ request.GET.next }}">
+      </form>
+      {% endif %}
+    </main>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Новая заправка — Бортжурнал</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+
+<div class="flex h-screen overflow-hidden">
+
+  <!-- ============ САЙДБАР ============ -->
+  <aside class="hidden lg:flex lg:flex-col w-64 bg-white border-r border-slate-200">
+    <div class="h-16 flex items-center gap-3 px-6 border-b border-slate-100">
+      <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-600 to-emerald-500 flex items-center justify-center">
+        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+        </svg>
+      </div>
+      <div>
+        <div class="font-bold text-slate-900">Мои записи</div>
+        <div class="text-xs text-slate-500">v1.0</div>
+      </div>
+    </div>
+
+    <nav class="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+        </svg>
+        Дашборд
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-blue-50 text-blue-700 font-medium">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+        </svg>
+        Бортжурнал
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+        </svg>
+        Записная книжка
+      </a>
+      <a href="#" class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-slate-600 hover:bg-slate-50 transition">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+        Отчёты
+      </a>
+    </nav>
+
+    <div class="border-t border-slate-100 p-3">
+      <div class="flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 cursor-pointer transition">
+        <div class="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">ИП</div>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-slate-900 truncate">Иван Петров</div>
+          <div class="text-xs text-slate-500 truncate">ivan@example.com</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Верхняя панель -->
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="#" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">Toyota Camry · А777АА 77</div>
+          <div class="text-sm font-semibold text-slate-900">Новая заправка</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <button class="hidden sm:inline-flex items-center gap-2 text-slate-600 hover:text-slate-900 font-medium px-4 py-2 rounded-lg hover:bg-slate-100 transition">
+          Отмена
+        </button>
+        <button class="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2 rounded-lg shadow-md hover:shadow-lg transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+          </svg>
+          Сохранить
+        </button>
+      </div>
+    </header>
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-5xl mx-auto">
+
+        <!-- Заголовок (для мобильных) -->
+        <div class="sm:hidden mb-5">
+          <h1 class="text-2xl font-bold text-slate-900">Новая заправка</h1>
+          <p class="text-sm text-slate-500 mt-1">Toyota Camry · А777АА 77</p>
+        </div>
+
+        <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+
+          <!-- ============ ЛЕВАЯ КОЛОНКА: ФОРМА ============ -->
+          <div class="xl:col-span-2 space-y-5">
+
+            <!-- Блок 1: Основные данные -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </span>
+                Основные данные
+              </h2>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Автомобиль -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Автомобиль</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>Toyota Camry · А777АА 77</option>
+                    <option>Kia Rio · В456ВВ 199</option>
+                  </select>
+                </div>
+
+                <!-- Дата -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Дата заправки</label>
+                  <div class="relative">
+                    <input type="date" value="2026-08-01" class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  </div>
+                </div>
+
+                <!-- АЗС (с поиском) -->
+                <div class="md:col-span-2">
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Автозаправочная станция</label>
+                  <div class="relative">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                    <input type="text" value="Лукойл" placeholder="Начните вводить название..." 
+                           class="w-full pl-9 pr-4 py-2.5 bg-white border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  </div>
+                  <!-- Подсказки недавних АЗС -->
+                  <div class="mt-2 flex flex-wrap gap-1.5">
+                    <span class="text-xs text-slate-500 py-1">Недавние:</span>
+                    <button class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 px-2.5 py-1 rounded-full transition">Лукойл</button>
+                    <button class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 px-2.5 py-1 rounded-full transition">Роснефть</button>
+                    <button class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 px-2.5 py-1 rounded-full transition">Газпромнефть</button>
+                    <button class="text-xs bg-slate-100 hover:bg-blue-50 hover:text-blue-700 text-slate-700 px-2.5 py-1 rounded-full transition">+ Произвольная</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Блок 2: Топливо и пробег -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-emerald-50 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                  </svg>
+                </span>
+                Топливо и пробег
+              </h2>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Тип топлива -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Тип топлива</label>
+                  <select class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option>АИ-95</option>
+                    <option>АИ-92</option>
+                    <option>АИ-98</option>
+                    <option>АИ-100</option>
+                    <option>ДТ</option>
+                    <option>Газ</option>
+                    <option>Электро</option>
+                  </select>
+                </div>
+
+                <!-- Пробег -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Пробег на момент заправки
+                    <span class="text-slate-400 font-normal">· км</span>
+                  </label>
+                  <input type="number" value="156420" placeholder="156420" 
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <p class="text-xs text-slate-500 mt-1">Проехали 440 км с прошлой заправки</p>
+                </div>
+
+                <!-- Объём -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Объём
+                    <span class="text-slate-400 font-normal">· литры</span>
+                  </label>
+                  <input type="number" step="0.01" value="40" placeholder="40.00" 
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Цена за литр -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Цена за литр
+                    <span class="text-slate-400 font-normal">· ₽</span>
+                  </label>
+                  <input type="number" step="0.01" value="63.00" placeholder="63.00" 
+                         class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Сумма (авто-расчёт) -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">
+                    Итого
+                    <span class="text-slate-400 font-normal">· ₽</span>
+                    <span class="ml-1 text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">авто</span>
+                  </label>
+                  <input type="number" step="0.01" value="2520.00" placeholder="2520.00" 
+                         class="w-full bg-blue-50 border border-blue-200 rounded-lg px-3 py-2.5 text-sm font-semibold text-blue-900 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <!-- Полный бак -->
+                <div class="flex items-end">
+                  <label class="flex items-center gap-3 w-full p-3 bg-slate-50 rounded-lg cursor-pointer hover:bg-slate-100 transition">
+                    <input type="checkbox" checked class="w-5 h-5 rounded border-slate-300 text-blue-600 focus:ring-blue-500">
+                    <div>
+                      <div class="text-sm font-medium text-slate-900">Заправил полный бак</div>
+                      <div class="text-xs text-slate-500">Для точного расчёта расхода</div>
+                    </div>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <!-- Блок 3: Дополнительно -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5 lg:p-6">
+              <h2 class="text-lg font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                <span class="w-8 h-8 rounded-lg bg-purple-50 flex items-center justify-center">
+                  <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                  </svg>
+                </span>
+                Дополнительно
+              </h2>
+
+              <div class="space-y-4">
+                <!-- Геолокация -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Место заправки</label>
+                  <div class="flex items-center gap-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+                    <svg class="w-5 h-5 text-emerald-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <div class="flex-1 min-w-0">
+                      <div class="text-sm font-medium text-emerald-900">Геолокация определена</div>
+                      <div class="text-xs text-emerald-700 truncate">ул. Ленина, 45, Москва · 2.3 км от дома</div>
+                    </div>
+                    <button class="text-xs text-emerald-700 hover:text-emerald-900 font-medium flex-shrink-0">Изменить</button>
+                  </div>
+                </div>
+
+                <!-- Фото чека -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Фото чека <span class="text-slate-400 font-normal">(необязательно)</span></label>
+                  <div class="border-2 border-dashed border-slate-200 hover:border-blue-400 rounded-xl p-6 text-center cursor-pointer transition bg-slate-50/50 hover:bg-blue-50/30">
+                    <svg class="w-10 h-10 text-slate-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                    </svg>
+                    <div class="text-sm font-medium text-slate-700">Перетащите файл или нажмите для загрузки</div>
+                    <div class="text-xs text-slate-500 mt-1">JPG, PNG до 10 МБ</div>
+                  </div>
+                </div>
+
+                <!-- Заметки -->
+                <div>
+                  <label class="block text-sm font-medium text-slate-700 mb-1.5">Заметки <span class="text-slate-400 font-normal">(необязательно)</span></label>
+                  <textarea rows="3" placeholder="Например: заправился перед поездкой в Тулу" 
+                            class="w-full bg-white border border-slate-200 rounded-lg px-3 py-2.5 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"></textarea>
+                </div>
+              </div>
+            </div>
+
+            <!-- Нижние кнопки (для мобильных) -->
+            <div class="flex flex-col sm:flex-row gap-2 sm:hidden">
+              <button class="flex-1 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold py-3 rounded-lg transition">
+                Отмена
+              </button>
+              <button class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md transition">
+                Сохранить
+              </button>
+            </div>
+
+          </div>
+
+          <!-- ============ ПРАВАЯ КОЛОНКА: ПОДСКАЗКИ ============ -->
+          <div class="xl:col-span-1 space-y-4">
+
+            <!-- Расчёт расхода -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-5 text-white">
+              <div class="flex items-center gap-2 mb-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                </svg>
+                <h3 class="font-semibold">Расчёт расхода</h3>
+              </div>
+              <div class="text-4xl font-bold mb-1">10.9 <span class="text-lg font-normal text-blue-100">л/100 км</span></div>
+              <div class="text-sm text-blue-100 mb-4">по этой заправке</div>
+              
+              <div class="pt-3 border-t border-white/20 space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-blue-100">Средний расход</span>
+                  <span class="font-semibold">9.2 л/100 км</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-blue-100">Отклонение</span>
+                  <span class="font-semibold text-amber-300">+18.5%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Последняя заправка -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+              <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Предыдущая заправка
+              </h3>
+              <div class="space-y-2 text-sm">
+                <div class="flex justify-between">
+                  <span class="text-slate-500">АЗС</span>
+                  <span class="font-medium text-slate-900">Роснефть</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Дата</span>
+                  <span class="font-medium text-slate-900">29 июля</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Пробег</span>
+                  <span class="font-medium text-slate-900">155 980 км</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-500">Объём</span>
+                  <span class="font-medium text-slate-900">40 л · 2 400 ₽</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Ближайшие АЗС -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-5">
+              <h3 class="text-sm font-semibold text-slate-900 mb-3 flex items-center gap-2">
+                <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+                Ближайшие АЗС
+              </h3>
+              <div class="space-y-2">
+                <button class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition text-left">
+                  <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-red-500 to-red-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">Л</div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-slate-900 truncate">Лукойл</div>
+                    <div class="text-xs text-slate-500">ул. Ленина, 45</div>
+                  </div>
+                  <div class="text-xs text-slate-500">2.3 км</div>
+                </button>
+                <button class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition text-left">
+                  <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-yellow-400 to-yellow-500 flex items-center justify-center text-slate-900 text-xs font-bold flex-shrink-0">Р</div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-slate-900 truncate">Роснефть</div>
+                    <div class="text-xs text-slate-500">Можайское ш., 72</div>
+                  </div>
+                  <div class="text-xs text-slate-500">3.8 км</div>
+                </button>
+                <button class="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition text-left">
+                  <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">Г</div>
+                  <div class="flex-1 min-w-0">
+                    <div class="text-sm font-medium text-slate-900 truncate">Газпромнефть</div>
+                    <div class="text-xs text-slate-500">Каширское ш., 18</div>
+                  </div>
+                  <div class="text-xs text-slate-500">5.1 км</div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Подсказка -->
+            <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4">
+              <div class="flex gap-3">
+                <svg class="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <div class="text-xs text-amber-900">
+                  <div class="font-semibold mb-1">Совет</div>
+                  <div>Всегда заправляйте «под завязку» — это позволит точнее считать расход топлива.</div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,32 @@
+# Конфиг сайта для ХОСТОВОГО nginx на сервере (режим 1 в docker-compose.yml).
+# Скопировать на сервер: /etc/nginx/sites-available/mynotes, заменить
+# <ВАШ_ДОМЕН> и путь /opt/mynotes (каталог прод-инсталляции), включить
+# symlink в sites-enabled, `nginx -t && systemctl reload nginx`, затем
+# `certbot --nginx -d <ВАШ_ДОМЕН>` — certbot сам допишет блок 443 и редирект.
+#
+# Важно: в отличие от typical Django-конфигов здесь НЕТ location /media/ —
+# приватные файлы (/media/<ключ>) отдаёт приложение через authorized-proxy
+# (login + проверка владельца, План MinIO/S3). /media/ попадает в общий
+# location / и проксируется в gunicorn — так и должно быть.
+# Статика (/static/) может раздаваться и WhiteNoise'ом из приложения;
+# alias оставлен по образцу существующего сайта для разгрузки gunicorn.
+
+server {
+    server_name <ВАШ_ДОМЕН>;
+
+    client_max_body_size 10M;
+
+    location /static/ {
+        alias /opt/mynotes/staticfiles/;
+        expires 30d;
+        access_log off;
+    }
+
+    location / {
+        proxy_pass http://127.0.0.1:8001;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}

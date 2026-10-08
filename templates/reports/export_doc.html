@@ -1,0 +1,47 @@
+{% load i18n_lang %}<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <title>{{ dataset.title }}</title>
+  <style>
+    @page {
+      size: A4;
+      margin: 18mm 14mm 16mm;
+      @bottom-center { content: counter(page) " / " counter(pages); font-size: 8pt; color: #64748B; }
+    }
+    body { font-family: 'DejaVu Sans', sans-serif; color: #0F172A; font-size: 9.5pt; }
+    .brand { border-bottom: 2px solid #2563EB; padding-bottom: 3mm; margin-bottom: 5mm; }
+    h1 { font-size: 15pt; margin: 0 0 1.5mm; }
+    .meta { color: #64748B; font-size: 8.5pt; }
+    h2 { font-size: 10.5pt; margin: 5mm 0 2mm; color: #2563EB; }
+    table { width: 100%; border-collapse: collapse; margin-bottom: 3mm; }
+    th { background: #2563EB; color: #FFFFFF; text-align: left; padding: 1.6mm 2mm; font-size: 8.5pt; }
+    td { padding: 1.4mm 2mm; border-bottom: 0.3mm solid #E2E8F0; font-size: 9pt; }
+    tr:nth-child(even) td { background: #F8FAFC; }
+    .empty { color: #94A3B8; font-size: 9pt; }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <h1>{{ dataset.title }}</h1>
+    <div class="meta">{{ meta_lines|join:" · " }}</div>
+  </div>
+  {% for block in dataset.blocks %}
+    <h2>{{ block.name }}</h2>
+    {% if block.rows %}
+    <table>
+      <thead><tr>{% for h in block.headers %}<th>{{ h }}</th>{% endfor %}</tr></thead>
+      <tbody>
+        {% for row in block.rows %}
+          <tr>{% for cell in row %}<td>{{ cell }}</td>{% endfor %}</tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <p class="empty">{% t 'exp.no_data' %}</p>
+    {% endif %}
+  {% empty %}
+    <p class="empty">{% t 'exp.no_data' %}</p>
+  {% endfor %}
+</body>
+</html>

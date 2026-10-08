@@ -1,0 +1,333 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'vehicle.fleet' %}{% endblock %}
+
+{% block content %}
+<div class="flex h-screen overflow-hidden">
+
+  {% include "partials/_sidebar.html" with active_page='vehicles' %}
+
+  <!-- ============ ОСНОВНАЯ ОБЛАСТЬ ============ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <header class="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-4 lg:px-8 flex-shrink-0">
+      <div class="flex items-center gap-3">
+        <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+          <svg class="w-6 h-6 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+          </svg>
+        </button>
+        <a href="{% url 'core:dashboard' %}" class="p-2 rounded-lg hover:bg-slate-100 transition">
+          <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+          </svg>
+        </a>
+        <div class="hidden sm:block">
+          <div class="text-xs text-slate-500">{% t 'nav.vehicles' %}</div>
+          <div class="text-sm font-semibold text-slate-900">{% t 'vehicle.fleet' %}</div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2">
+        <div class="lg:hidden w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-purple-500 flex items-center justify-center text-white font-semibold text-sm">{{ user.initials }}</div>
+      </div>
+    </header>
+
+    <!-- Контент -->
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+
+      <div class="max-w-6xl mx-auto">
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="mb-4 px-4 py-3 rounded-lg text-sm font-medium bg-emerald-50 border border-emerald-200 text-emerald-800">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+
+        <!-- Заголовок + действие -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+          <div>
+            <div class="flex items-center gap-2 text-sm text-slate-500 mb-1">
+              <a href="{% url 'core:dashboard' %}" class="hover:text-slate-700">{% t 'nav.dashboard' %}</a>
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+              <span class="text-slate-900 font-medium">{% t 'nav.vehicles' %}</span>
+            </div>
+            <h1 class="text-2xl lg:text-3xl font-bold text-slate-900">{% t 'vehicle.fleet' %}</h1>
+            <p class="text-slate-500 mt-1">
+              {% t 'vehicle.fleet_summary' count=vehicle_count mileage=total_mileage %}
+            </p>
+          </div>
+          <a href="{% url 'vehicles:create' %}" class="inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg shadow-md hover:shadow-lg transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+            </svg>
+            {% t 'vehicle.add_short' %}
+          </a>
+        </div>
+
+        {% if vehicles %}
+        <!-- ============ ОБЩАЯ СТАТИСТИКА ============ -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4 mb-6">
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-blue-50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">{% t 'vehicle.month_cost' %}</div>
+                <div class="text-lg font-bold text-slate-900">{{ expenses_month }} ₽</div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-emerald-50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">{% t 'vehicle.month_fuel' %}</div>
+                <div class="text-lg font-bold text-slate-900">{{ fuel_month }} ₽</div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">{% t 'vehicle.fines' %}</div>
+                <div class="text-lg font-bold {% if unpaid_fines %}text-amber-600{% else %}text-slate-900{% endif %}">{{ unpaid_fines }} {% t 'cln.unpaid_short' %}</div>
+              </div>
+            </div>
+          </div>
+          <div class="bg-white rounded-xl border border-slate-200 p-4">
+            <div class="flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-purple-50 flex items-center justify-center flex-shrink-0">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+              </div>
+              <div>
+                <div class="text-xs text-slate-500">{% t 'vehicle.insurance' %}</div>
+                <div class="text-lg font-bold {% if expiring_insurances %}text-amber-600{% else %}text-slate-900{% endif %}">{{ expiring_insurances }} {% t 'cln.expiring_short' %}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- ============ СЕТКА КАРТОЧЕК АВТО ============ -->
+        {% if not vehicles %}
+        <div class="bg-white rounded-2xl border border-slate-200 p-16 text-center">
+          <div class="w-16 h-16 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
+            <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0zM13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-10h4m-4 0H9"/>
+            </svg>
+          </div>
+          <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.empty' %}</div>
+          <a href="{% url 'vehicles:create' %}" class="inline-flex items-center gap-2 mt-4 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-5 py-2.5 rounded-lg transition">
+            {% t 'vehicle.add_short' %}
+          </a>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          {% for v in vehicles %}
+          <!-- === АВТО === -->
+          <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden hover:shadow-lg hover:border-blue-300 transition group" x-data="{open: false}">
+
+            <div class="relative h-40 bg-gradient-to-br from-slate-100 to-slate-200 overflow-hidden">
+              {% if v.photo %}
+                <img src="{{ v.photo.url }}" alt="{{ v }}" class="absolute inset-0 w-full h-full object-cover">
+              {% else %}
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <svg class="w-24 h-24 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10m10 0h4m-4 0H9m10 0v-6a1 1 0 00-1-1h-2" />
+                  </svg>
+                </div>
+              {% endif %}
+
+              {% if v.is_default %}
+              <div class="absolute top-3 left-3 bg-blue-600 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                <span class="w-1.5 h-1.5 rounded-full bg-white"></span>
+                {% t 'vehicle.active' %}
+              </div>
+              {% endif %}
+
+              {% if v.notice_count %}
+              <div class="absolute top-3 right-3 flex gap-1">
+                {% if v.unpaid_fines %}
+                <span class="bg-amber-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                  {{ v.unpaid_fines }}
+                </span>
+                {% endif %}
+                {% if v.expiring_insurances %}
+                <span class="bg-rose-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                  </svg>
+                  {{ v.expiring_insurances }}
+                </span>
+                {% endif %}
+                {% if v.expired_insurances %}
+                <span class="bg-red-500 text-white text-xs font-semibold px-2.5 py-1 rounded-full flex items-center gap-1">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                  </svg>
+                  {{ v.expired_insurances }}
+                </span>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="p-5">
+              <div class="flex items-start justify-between mb-4">
+                <div>
+                  <h3 class="text-xl font-bold text-slate-900">{{ v }}</h3>
+                  <p class="text-sm text-slate-500 mt-0.5">{{ v.get_fuel_type_display }}{% if v.engine_volume %} · {{ v.engine_volume|floatformat }} л{% endif %}</p>
+                </div>
+                <div class="relative" @click.outside="open=false">
+                  <button @click="open = !open" class="p-2 rounded-lg hover:bg-slate-100 transition">
+                    <svg class="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                    </svg>
+                  </button>
+                  <div x-show="open" x-cloak x-transition class="absolute right-0 mt-1 w-44 bg-white border border-slate-200 rounded-xl shadow-lg z-20 overflow-hidden py-1">
+                    <a href="{% url 'vehicles:update' v.pk %}" class="flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                      {% t 'vehicle.edit' %}
+                    </a>
+                    {% if not v.is_default %}
+                    <form method="post" action="{% url 'vehicles:set_default' v.pk %}">
+                      {% csrf_token %}
+                      <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-slate-700 hover:bg-slate-50">
+                        {% t 'vehicle.make_default' %}
+                      </button>
+                    </form>
+                    {% endif %}
+                    <form method="post" action="{% url 'vehicles:delete' v.pk %}" onsubmit="return confirm('{% t 'vehicle.delete' %}?')">
+                      {% csrf_token %}
+                      <button type="submit" class="w-full text-left flex items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        {% t 'vehicle.delete' %}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Характеристики -->
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-0.5">{% t 'vehicle.plate' %}</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ v.license_plate|default:"—" }}</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-0.5">{% t 'vehicle.mileage' %}</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ v.current_mileage|default:0 }} км</div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-0.5">{% t 'vehicle.fuel_type' %}</div>
+                  <div class="text-sm font-semibold text-slate-900 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+                    {{ v.get_fuel_type_display|default:"—" }}
+                  </div>
+                </div>
+                <div class="bg-slate-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-0.5">{% t 'vehicle.gearbox_drive' %}</div>
+                  <div class="text-sm font-semibold text-slate-900">
+                    {{ v.get_transmission_display|default:"—" }}{% if v.drive_type %} · {{ v.get_drive_type_display|lower }}{% endif %}
+                  </div>
+                </div>
+              </div>
+
+              <!-- Сводка за месяц -->
+              <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-blue-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-0.5">{% t 'vehicle.month_expenses' %}</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ v.expenses_month }} ₽</div>
+                </div>
+                <div class="bg-emerald-50 rounded-lg p-3">
+                  <div class="text-xs text-slate-500 mb-0.5">{% t 'vehicle.month_fuel_card' %}</div>
+                  <div class="text-sm font-semibold text-slate-900">{{ v.fuel_month.total_cost }} ₽</div>
+                </div>
+              </div>
+
+              {% if v.notice_count %}
+              <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <div class="text-xs font-semibold text-amber-900 mb-2">{% t 'vehicle.attention' %}</div>
+                <ul class="space-y-1 text-xs text-amber-800">
+                  {% if v.unpaid_fines %}
+                  <li class="flex items-center gap-1.5">
+                    <span class="w-1 h-1 rounded-full bg-amber-500"></span>
+                    {{ v.unpaid_fines }} {% t 'vehicle.indicator_unpaid_fines' %}
+                  </li>
+                  {% endif %}
+                  {% if v.expiring_insurances %}
+                  <li class="flex items-center gap-1.5">
+                    <span class="w-1 h-1 rounded-full bg-rose-500"></span>
+                    {{ v.expiring_insurances }} {% t 'vehicle.indicator_expiring_insurance' %}
+                  </li>
+                  {% endif %}
+                  {% if v.expired_insurances %}
+                  <li class="flex items-center gap-1.5">
+                    <span class="w-1 h-1 rounded-full bg-red-500"></span>
+                    {{ v.expired_insurances }} {% t 'vehicle.indicator_expired_insurance' %}
+                  </li>
+                  {% endif %}
+                </ul>
+              </div>
+              {% else %}
+              <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+                <div class="flex items-center gap-2 text-xs font-semibold text-emerald-900">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                  {% t 'vehicle.all_ok' %}
+                </div>
+              </div>
+              {% endif %}
+
+              <a href="{% url 'vehicles:detail' v.pk %}" class="flex items-center justify-center gap-2 w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2.5 rounded-lg transition group-hover:shadow-md">
+                {% t 'vehicle.open_log' %}
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"/>
+                </svg>
+              </a>
+            </div>
+          </div>
+          {% endfor %}
+
+          <!-- === КАРТОЧКА "ДОБАВИТЬ АВТО" === -->
+          {% if vehicles %}
+          <a href="{% url 'vehicles:create' %}" class="bg-white rounded-2xl border-2 border-dashed border-slate-300 hover:border-blue-500 hover:bg-blue-50/30 transition cursor-pointer flex items-center justify-center min-h-[480px] group">
+            <div class="text-center p-8">
+              <div class="w-16 h-16 rounded-2xl bg-slate-100 group-hover:bg-blue-100 flex items-center justify-center mx-auto mb-4 transition">
+                <svg class="w-8 h-8 text-slate-400 group-hover:text-blue-600 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+              </div>
+              <div class="text-lg font-semibold text-slate-900 mb-1">{% t 'vehicle.add' %}</div>
+              <div class="text-sm text-slate-500">{% t 'vehicle.subtitle_fl' %}</div>
+            </div>
+          </a>
+          {% endif %}
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+{% endblock %}

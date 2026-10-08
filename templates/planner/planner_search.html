@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% load i18n_lang %}
+
+{% block title %}{% t 'pl.search' %}{% endblock %}
+
+{% block content %}
+{% include "planner/partials/_planner_css.html" %}
+<div class="flex h-screen overflow-hidden">
+  {% include "partials/_sidebar.html" with active_page='planner' %}
+  <div class="flex-1 flex flex-col overflow-hidden">
+    {% t 'pl.search' as header_ttl %}
+    {% include "planner/partials/_header.html" with header_title=header_ttl %}
+
+    <main class="flex-1 overflow-y-auto p-4 lg:p-8">
+      <div class="max-w-2xl mx-auto">
+        <form method="get" class="flex gap-2 mb-2">
+          <input type="text" name="q" value="{{ q }}" autofocus placeholder="{% t 'pl.search_placeholder' %}" class="form-input flex-1">
+          <button class="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold px-5 rounded-lg transition">{% t 'pl.search' %}</button>
+        </form>
+        <div class="flex gap-2 mb-6 text-sm">
+          <a href="?q={{ q|urlencode }}" class="px-3 py-1 rounded-full {% if not scope %}bg-slate-900 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">{% t 'pl.filter_all' %}</a>
+          <a href="?q={{ q|urlencode }}&scope=personal" class="px-3 py-1 rounded-full {% if scope == 'personal' %}bg-emerald-600 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">📅 {% t 'pl.scope_personal' %}</a>
+          <a href="?q={{ q|urlencode }}&scope=work" class="px-3 py-1 rounded-full {% if scope == 'work' %}bg-blue-600 text-white{% else %}bg-slate-100 text-slate-600{% endif %}">💼 {% t 'pl.scope_work' %}</a>
+        </div>
+
+        {% if q %}
+          <div class="space-y-2">
+            {% for e in results %}
+              <a href="{% if e.scope.code == 'work' %}{% url 'planner:task' e.pk %}{% else %}{% url 'planner:event_update' e.pk %}{% endif %}"
+                 class="flex items-center gap-3 bg-white border border-slate-200 rounded-xl p-4 hover:shadow-md transition">
+                <span class="text-lg flex-shrink-0">{% if e.scope.code == 'work' %}💼{% else %}📅{% endif %}</span>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-semibold text-slate-900 truncate">{{ e.title }}</div>
+                  <div class="text-xs text-slate-500 truncate">
+                    {{ e.start_at|date:"d.m.Y H:i"|default:'—' }}
+                    {% if e.project %} · {{ e.project.title }}{% endif %}
+                    {% if e.status %} · {{ e.status.name }}{% endif %}
+                    {% for tag in e.tags|slice:":3" %} · #{{ tag }}{% endfor %}
+                  </div>
+                </div>
+              </a>
+            {% empty %}
+              <p class="text-sm text-slate-400 text-center py-8">{% t 'pl.search_empty' %}</p>
+            {% endfor %}
+          </div>
+        {% else %}
+          <p class="text-sm text-slate-400 text-center py-8">{% t 'pl.search_hint' %}</p>
+        {% endif %}
+      </div>
+    </main>
+  </div>
+</div>
+{% endblock %}
