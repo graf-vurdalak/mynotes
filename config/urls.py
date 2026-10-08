@@ -6,7 +6,7 @@ from django.views.generic import RedirectView
 from django.conf import settings
 from django.conf.urls.static import static
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
-from apps.accounts.views import custom_login, custom_logout
+from apps.accounts.views import custom_login, custom_logout, yandex_login_continue
 from apps.core.views import media_file
 
 urlpatterns = [
@@ -20,6 +20,7 @@ urlpatterns = [
     path("api/v1/docs/swagger/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/v1/docs/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
     path("api/v1/bot/", include("apps.api.urls")),
+    path("login/yandex/", yandex_login_continue, name="yandex_login_continue"),
     path("login/", custom_login, name="login"),
     path("logout/", custom_logout, name="logout"),
     path("", include("apps.accounts.urls")),

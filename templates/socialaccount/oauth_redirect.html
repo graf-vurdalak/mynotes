@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% load allauth %}
+
+{% block title %}Переход к Яндексу — {% app_name %}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
+    <h1 class="text-2xl font-bold text-slate-900 mb-3">Переход к Яндексу</h1>
+    <p class="text-slate-500 mb-6">Если переход не начался автоматически, нажмите кнопку ниже.</p>
+    <a href="{{ authorize_url }}"
+       class="inline-flex items-center px-5 py-3 bg-yellow-400 hover:bg-yellow-500 text-slate-900 font-semibold rounded-lg transition duration-200">
+      Продолжить
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>window.location.replace("{{ authorize_url|escapejs }}");</script>
+{% endblock %}

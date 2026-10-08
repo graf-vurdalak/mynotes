@@ -1,3 +1,5 @@
+from urllib.parse import urlsplit
+
 from django import forms
 from django.conf import settings
 from django.core.cache import cache
@@ -11,6 +13,8 @@ from django.views.decorators.debug import sensitive_post_parameters
 from django.contrib import messages
 from django_otp import DEVICE_ID_SESSION_KEY, login as otp_login, user_has_device
 from allauth.account.models import EmailAddress
+from allauth.socialaccount.providers.oauth2.views import OAuth2LoginView
+from allauth.socialaccount.providers.yandex.views import YandexOAuth2Adapter
 
 from apps.core.i18n import t
 from . import twofactor
@@ -32,6 +36,7 @@ from .tokens import issue_token, revoke_token
 _ISSUED_SESSION_KEY = "issued_bot_tokens"
 _ONE_TIME_TOKEN_TTL = 300
 _ONE_TIME_BACKUP_TTL = 300
+_yandex_oauth_login = OAuth2LoginView.adapter_view(YandexOAuth2Adapter)
 
 
 def _one_time_token_key(pk):
@@ -82,6 +87,25 @@ def custom_login(request):
         error = ""
 
     return render(request, "accounts/login.html", {"next": next_url, "error": error})
+
+
+def yandex_login_continue(request):
+    response = _yandex_oauth_login(request)
+    location = response.get("Location", "")
+    target = urlsplit(location)
+    if (
+        request.method == "POST"
+        and response.status_code == 302
+        and target.scheme == "https"
+        and target.netloc == "oauth.yandex.com"
+        and target.path == "/authorize"
+    ):
+        return render(
+            request,
+            "socialaccount/oauth_redirect.html",
+            {"authorize_url": location},
+        )
+    return response
 
 
 def custom_signup(request):

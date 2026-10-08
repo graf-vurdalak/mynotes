@@ -144,7 +144,10 @@ def main() -> None:
     print(f"Записано: {args.env_out} (секреты вставлены), {args.s3_out} (UTF-8 без BOM, chmod 600).")
     if leftovers:
         print("Заполните вручную в " + args.env_out + ": " + ", ".join(leftovers))
-    print("Проверка: python manage.py check --deploy (core.E001 не должен появляться).")
+    print(
+        "После заполнения .env и docker login ghcr.io проверьте production-образ: "
+        "docker compose run --rm --no-deps web python manage.py check --deploy"
+    )
 
 
 if __name__ == "__main__":

@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load allauth %}
+{% load socialaccount %}
+
+{% block title %}
+    {% if process == "connect" %}
+        Подключение {{ provider.name }} — {% app_name %}
+    {% else %}
+        Вход через {{ provider.name }} — {% app_name %}
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-slate-50 py-12 px-4 sm:px-6 lg:px-8">
+  <div class="max-w-md w-full">
+    <div class="bg-white rounded-2xl shadow-xl p-8">
+      {% if process == "connect" %}
+        <h1 class="text-2xl font-bold text-center text-slate-900 mb-2">Подключение {{ provider.name }}</h1>
+        <p class="text-center text-slate-500 mb-8">{% blocktrans with provider.name as provider %}You are about to connect a new third-party account from {{ provider }}.{% endblocktrans %}</p>
+      {% else %}
+        <h1 class="text-2xl font-bold text-center text-slate-900 mb-2">Вход через {{ provider.name }}</h1>
+        <p class="text-center text-slate-500 mb-8">{% blocktrans with provider.name as provider %}You are about to sign in using a third-party account from {{ provider }}.{% endblocktrans %}</p>
+      {% endif %}
+
+      <form id="socialaccount-login-form" method="post" action="{% url 'yandex_login_continue' %}?{{ request.GET.urlencode }}" class="space-y-5">
+        {% csrf_token %}
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 rounded-lg shadow-md hover:shadow-lg transition duration-200">
+          Продолжить
+        </button>
+      </form>
+      <script>document.getElementById("socialaccount-login-form").submit();</script>
+
+      <p class="text-center text-sm text-slate-600 mt-6">
+        <a href="{% url 'account_login' %}" class="font-medium text-blue-600 hover:text-blue-500">
+          Назад ко входу
+        </a>
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}
