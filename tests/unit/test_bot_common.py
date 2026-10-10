@@ -1,10 +1,14 @@
 # -*- coding: utf-8 -*-
 """Тесты общего каркаса ботов (Этап 4.3): конфигурация инсталляций, парсер, тексты, клиент."""
 
+import asyncio
 from datetime import date
+from unittest.mock import patch
 
 import pytest
+from aiogram.client.session.aiohttp import AiohttpSession
 
+from telegram_bots.common import bot_runtime
 from telegram_bots.common.api_client import BotAPIClient, BotAPIError
 from telegram_bots.common.config_store import ConfigStore
 from telegram_bots.common.quick_parser import (
@@ -18,6 +22,21 @@ from telegram_bots.common.quick_parser import (
     parse_time,
 )
 from telegram_bots.common.texts import t
+
+
+def test_create_bot_uses_configured_http_proxy(monkeypatch):
+    proxy = "http://172.29.172.1:3128"
+    monkeypatch.setenv("TELEGRAM_HTTP_PROXY", proxy)
+    session = AiohttpSession()
+
+    with patch.object(bot_runtime, "AiohttpSession", return_value=session) as session_factory:
+        bot = bot_runtime.create_bot("123:secret")
+
+    try:
+        session_factory.assert_called_once_with(proxy=proxy)
+        assert bot.session is session
+    finally:
+        asyncio.run(session.close())
 
 
 # --- ConfigStore (мульти-серверность, ТЗ 7.1/7.2) --------------------------

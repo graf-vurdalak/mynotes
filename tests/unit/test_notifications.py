@@ -134,7 +134,11 @@ def test_gateway_upserts_binding_from_headers(client, user):
     assert BotChatBinding.objects.filter(user=user).count() == 1
 
 
-@override_settings(TELEGRAM_VEHICLE_BOT_TOKEN="123:secret", TELEGRAM_PLANNER_BOT_TOKEN="")
+@override_settings(
+    TELEGRAM_VEHICLE_BOT_TOKEN="123:secret",
+    TELEGRAM_PLANNER_BOT_TOKEN="",
+    TELEGRAM_HTTP_PROXY="",
+)
 @pytest.mark.django_db
 def test_send_telegram_success(user, monkeypatch):
     bind_chat(user, "vehicle", "42")
@@ -144,6 +148,23 @@ def test_send_telegram_success(user, monkeypatch):
     assert n.sent_via_telegram is True
     assert post.call_args.args[0].endswith("/sendMessage")
     assert post.call_args.kwargs["json"] == {"chat_id": "42", "text": "Заголовок\nТекст"}
+    assert "proxies" not in post.call_args.kwargs
+
+
+@override_settings(
+    TELEGRAM_VEHICLE_BOT_TOKEN="123:secret",
+    TELEGRAM_HTTP_PROXY="http://172.29.172.1:3128",
+)
+@pytest.mark.django_db
+def test_send_telegram_uses_configured_proxy(user, monkeypatch):
+    bind_chat(user, "vehicle", "42")
+    post = MagicMock(return_value=MagicMock(status_code=200, json=lambda: {"ok": True}, text=""))
+    monkeypatch.setattr("apps.notifications.telegram.requests.post", post)
+
+    n = notify(user, "vehicle.any", "Заголовок", "Текст", channels=("telegram",))
+
+    assert n.sent_via_telegram is True
+    assert post.call_args.kwargs["proxies"] == {"https": "http://172.29.172.1:3128"}
 
 
 @override_settings(TELEGRAM_VEHICLE_BOT_TOKEN="")

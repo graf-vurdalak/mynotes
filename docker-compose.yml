@@ -134,6 +134,7 @@ services:
     command: python -m telegram_bots.vehicle_bot.main
     environment:
       - TELEGRAM_VEHICLE_BOT_TOKEN=${TELEGRAM_VEHICLE_BOT_TOKEN}
+      - TELEGRAM_HTTP_PROXY=${TELEGRAM_HTTP_PROXY:-}
       - BOT_STATE_DB=/data/vehicle.db
     volumes:
       - bot_state:/data
@@ -146,6 +147,7 @@ services:
     command: python -m telegram_bots.planner_bot.main
     environment:
       - TELEGRAM_PLANNER_BOT_TOKEN=${TELEGRAM_PLANNER_BOT_TOKEN}
+      - TELEGRAM_HTTP_PROXY=${TELEGRAM_HTTP_PROXY:-}
       - BOT_STATE_DB=/data/planner.db
     volumes:
       - bot_state:/data

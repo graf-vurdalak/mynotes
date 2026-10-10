@@ -7,13 +7,20 @@ import os
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.default import DefaultBotProperties
+from aiogram.client.session.aiohttp import AiohttpSession
 from aiogram.enums import ParseMode
 
 
 def create_bot(token: str) -> Bot:
     if not token:
         raise RuntimeError("Не задан токен бота (TELEGRAM_*_BOT_TOKEN)")
-    return Bot(token=token, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    proxy = os.environ.get("TELEGRAM_HTTP_PROXY", "").strip()
+    session = AiohttpSession(proxy=proxy) if proxy else None
+    return Bot(
+        token=token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        session=session,
+    )
 
 
 def build_dispatcher(routers) -> Dispatcher:

@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# aiogram требует только aiohttp/aiosignal; libpq — на случай прямого доступа к БД не нужен.
+# aiohttp-socks обеспечивает явный HTTP proxy в aiogram; libpq ботам не нужен.
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libjpeg62-turbo libpng16-16 \
     && rm -rf /var/lib/apt/lists/*

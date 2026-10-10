@@ -159,6 +159,7 @@ services:
       - bot_state:/data
     environment:
       - TELEGRAM_VEHICLE_BOT_TOKEN=${TELEGRAM_VEHICLE_BOT_TOKEN}
+      - TELEGRAM_HTTP_PROXY=${TELEGRAM_HTTP_PROXY:-}
       - BOT_STATE_DB=/data/vehicle.db
     depends_on:
       - web
@@ -174,6 +175,7 @@ services:
       - bot_state:/data
     environment:
       - TELEGRAM_PLANNER_BOT_TOKEN=${TELEGRAM_PLANNER_BOT_TOKEN}
+      - TELEGRAM_HTTP_PROXY=${TELEGRAM_HTTP_PROXY:-}
       - BOT_STATE_DB=/data/planner.db
     depends_on:
       - web

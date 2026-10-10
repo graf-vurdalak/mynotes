@@ -32,6 +32,7 @@ FERNET_KEY = env("FERNET_KEY")
 # сервер шлёт sendMessage от имени того же бота, чат-привязка — BotChatBinding.
 TELEGRAM_VEHICLE_BOT_TOKEN = env("TELEGRAM_VEHICLE_BOT_TOKEN")
 TELEGRAM_PLANNER_BOT_TOKEN = env("TELEGRAM_PLANNER_BOT_TOKEN")
+TELEGRAM_HTTP_PROXY = env("TELEGRAM_HTTP_PROXY", default="").strip()
 
 LANGUAGE_CODE = "ru-ru"
 LANGUAGES = [
