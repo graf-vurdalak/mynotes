@@ -1,4 +1,4 @@
-Django==5.2.17
+Django==5.2.18
 djangorestframework==3.18.1
 django-allauth[socialaccount]==65.19.7
 django-otp==1.6.3
