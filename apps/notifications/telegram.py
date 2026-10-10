@@ -49,17 +49,16 @@ def send_telegram(user, notification, bot: str | None = None) -> bool:
     if binding is None:
         return False
     text = f"{notification.title}\n{notification.message}".strip()
-    request_kwargs = {
-        "json": {"chat_id": binding.chat_id, "text": text},
-        "timeout": API_TIMEOUT,
-    }
+    proxy_kwargs = {}
     if settings.TELEGRAM_HTTP_PROXY:
-        request_kwargs["proxies"] = {"https": settings.TELEGRAM_HTTP_PROXY}
+        proxy_kwargs["proxies"] = {"https": settings.TELEGRAM_HTTP_PROXY}
 
     try:
         resp = requests.post(
             f"https://api.telegram.org/bot{token}/sendMessage",
-            **request_kwargs,
+            json={"chat_id": binding.chat_id, "text": text},
+            timeout=API_TIMEOUT,
+            **proxy_kwargs,
         )
         ok = resp.status_code == 200 and bool(resp.json().get("ok"))
         if not ok:
