@@ -139,6 +139,22 @@ def test_t_formats_placeholders():
     assert t("bot.addserver.added", name="Прод") == "Сервер «Прод» добавлен и проверен ✅"
 
 
+@pytest.mark.parametrize(
+    ("key", "placeholders"),
+    [
+        ("bot.vehicle.help", ("текст",)),
+        ("bot.start.planner", ("текст",)),
+        ("bot.help.planner", ("запрос", "текст")),
+    ],
+)
+def test_bot_help_placeholders_are_html_escaped(key, placeholders):
+    text = t(key)
+
+    for placeholder in placeholders:
+        assert f"&lt;{placeholder}&gt;" in text
+        assert f"<{placeholder}>" not in text
+
+
 # --- api_client -------------------------------------------------------------
 
 def test_client_headers_and_url_normalization():

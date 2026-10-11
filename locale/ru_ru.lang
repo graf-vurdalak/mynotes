@@ -677,10 +677,10 @@ pl.err_comment=Комментарий не может быть пустым
 # === Telegram-боты (bot.*) ===
 bot.start.add_hint=Чтобы начать, добавьте сервер: /addserver
 bot.vehicle.start=Привет! Я бот Бортжурнала. Добавь сервер и пиши, например: «Заправил 40л 95 на Лукойле 2500 пробег 125000». Команды: /help
-bot.vehicle.help=Команды: /servers — серверы, /vehicles — авто, /fuel — заправка, /purchase — покупка, /service — сервис, /fine — штраф, /insurance — страховки, /stats — статистика, /quick <текст> — быстрая запись, /help — справка
-bot.start.planner=Привет! Я бот Записной книжки. Команды: /events, /tasks, /newtask, /newevent, /quick <текст>
+bot.vehicle.help=Команды: /servers — серверы, /vehicles — авто, /fuel — заправка, /purchase — покупка, /service — сервис, /fine — штраф, /insurance — страховки, /stats — статистика, /quick &lt;текст&gt; — быстрая запись, /help — справка
+bot.start.planner=Привет! Я бот Записной книжки. Команды: /events, /tasks, /newtask, /newevent, /quick &lt;текст&gt;
 bot.start.planner_no_server=Привет! Сначала добавьте сервер: /addserver
-bot.help.planner=Команды: /servers — серверы, /scope — раздел, /events — события, /tasks — задачи, /newtask — новая задача, /newevent — новое событие, /projects — проекты, /search <запрос> — поиск, /quick <текст> — быстрая запись, /help — справка
+bot.help.planner=Команды: /servers — серверы, /scope — раздел, /events — события, /tasks — задачи, /newtask — новая задача, /newevent — новое событие, /projects — проекты, /search &lt;запрос&gt; — поиск, /quick &lt;текст&gt; — быстрая запись, /help — справка
 
 bot.servers.title=Ваши серверы (нажмите, чтобы сделать активным):
 bot.servers.empty=Серверов пока нет. Добавьте: /addserver
