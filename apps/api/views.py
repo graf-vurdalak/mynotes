@@ -9,9 +9,12 @@ from apps.core.i18n import t
 
 import mimetypes
 from uuid import uuid4
+from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone
 from django_ratelimit.core import is_ratelimited
 from drf_spectacular.utils import OpenApiResponse, extend_schema
 from rest_framework import status
@@ -111,7 +114,12 @@ class BotIngestView(BotAPIView):
         action = body.get("action")
         if not module or not action:
             raise ValidationError(t("api.err_need_fields"))
-        result = handlers.dispatch(module, action, request.user, body.get("payload") or {})
+        try:
+            user_timezone = ZoneInfo(request.user.settings.timezone)
+        except (ObjectDoesNotExist, ZoneInfoNotFoundError, ValueError):
+            user_timezone = None
+        with timezone.override(user_timezone):
+            result = handlers.dispatch(module, action, request.user, body.get("payload") or {})
         return Response(result, status=status.HTTP_200_OK)
 
 

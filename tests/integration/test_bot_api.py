@@ -2,12 +2,15 @@
 """Интеграционные тесты API-гейтвея для Telegram-ботов (Этап 4.2, ТЗ 6.2)."""
 
 import json
+from datetime import datetime, timezone as datetime_timezone
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.utils import timezone as django_timezone
 
-from apps.accounts.models import AuthToken
+from apps.accounts.models import AuthToken, UserSettings
 from apps.accounts.tokens import issue_token
 from apps.vehicles.models import FuelEntry, Purchase, Service, Vehicle
 
@@ -148,6 +151,32 @@ def test_ingest_create_event_personal(client, token):
     assert r.status_code == 200
     ev = Event.objects.get(pk=r.json()["entity_id"])
     assert ev.scope.code == "personal" and "работа" in ev.tags
+
+
+@pytest.mark.parametrize(("action", "datetime_field"), [
+    ("create_event", "start_at"),
+    ("create_task", "due_at"),
+])
+@pytest.mark.django_db
+def test_ingest_interprets_naive_datetime_in_user_timezone(
+    client, user, token, action, datetime_field
+):
+    from apps.planner.models import Event
+
+    UserSettings.objects.update_or_create(user=user, defaults={"timezone": "Asia/Dubai"})
+    r = ingest(client, token, "planner", action, {
+        "title": "Встреча",
+        datetime_field: "2026-12-01T14:40:00",
+    })
+
+    assert r.status_code == 200, r.content
+    event = Event.objects.get(pk=r.json()["entity_id"])
+    saved_datetime = getattr(event, datetime_field)
+    dubai = ZoneInfo("Asia/Dubai")
+    assert saved_datetime == datetime(2026, 12, 1, 10, 40, tzinfo=datetime_timezone.utc)
+    assert django_timezone.localtime(saved_datetime, dubai) == datetime(
+        2026, 12, 1, 14, 40, tzinfo=dubai
+    )
 
 
 # --- references ------------------------------------------------------------
