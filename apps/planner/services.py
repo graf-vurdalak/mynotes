@@ -11,6 +11,8 @@ import datetime as dt
 
 from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
+
 from .models import Comment, Event, Project, Scope, Status, StatusHistory
 
 WEEKDAY_NAMES = ["MO", "TU", "WE", "TH", "FR", "SA", "SU"]
@@ -163,10 +165,10 @@ def parse_recurrence(rule: str):
     return {"freq": freq, "interval": interval, "byday": byday, "eom": eom}
 
 
-def _occurrence_time(original: dt.datetime, day: dt.date) -> dt.datetime:
-    naive = timezone.localtime(original)
+def _occurrence_time(original: dt.datetime, day: dt.date, user_timezone) -> dt.datetime:
+    naive = timezone.localtime(original, user_timezone)
     result = dt.datetime.combine(day, naive.time())
-    return timezone.make_aware(result, naive.tzinfo)
+    return timezone.make_aware(result, user_timezone)
 
 
 def _day_in_month(year: int, month: int, day: int) -> dt.date:
@@ -194,7 +196,9 @@ def _occurrence_at(rule_date: int, rule: dict, start_date: dt.date) -> dt.date |
     return None
 
 
-def expand_recurring(event: Event, range_start: dt.date, range_end: dt.date) -> list[dt.datetime]:
+def expand_recurring(
+    event: Event, range_start: dt.date, range_end: dt.date, user_timezone=None
+) -> list[dt.datetime]:
     """Даты начала экземпляров повторяющегося события в окне [range_start, range_end].
 
     Первый экземпляр — оригинальная дата start_at; далее — по правилу,
@@ -205,11 +209,12 @@ def expand_recurring(event: Event, range_start: dt.date, range_end: dt.date) -> 
     rule = parse_recurrence(event.recurrence_rule)
     if not rule or event.start_at is None:
         return []
+    user_timezone = user_timezone or get_user_timezone(event.user)
     start_dt = event.start_at
-    start_date = timezone.localtime(start_dt).date()
+    start_date = timezone.localtime(start_dt, user_timezone).date()
     max_dt = None
     if event.recurrence_end:
-        max_dt = timezone.localtime(event.recurrence_end).date()
+        max_dt = timezone.localtime(event.recurrence_end, user_timezone).date()
     count_limit = event.recurrence_count or 0
     window_end = range_end if max_dt is None else min(range_end, max_dt)
     if window_end < range_start or window_end < start_date:
@@ -271,7 +276,7 @@ def expand_recurring(event: Event, range_start: dt.date, range_end: dt.date) -> 
         if day > window_end:
             return False
         if day >= range_start:
-            occurrences.append(_occurrence_time(start_dt, day))
+            occurrences.append(_occurrence_time(start_dt, day, user_timezone))
         return True
 
     if freq == "DAILY":
@@ -315,7 +320,7 @@ def events_for_range(user, scope_code: str, range_start: dt.date, range_end: dt.
     """
     from django.db.models import Q
 
-    tz = timezone.get_current_timezone()
+    tz = get_user_timezone(user)
     win_start = timezone.make_aware(dt.datetime.combine(range_start, dt.time.min), tz)
     win_end = timezone.make_aware(dt.datetime.combine(range_end, dt.time.max), tz)
 
@@ -327,7 +332,7 @@ def events_for_range(user, scope_code: str, range_start: dt.date, range_end: dt.
         Q(recurrence_end__isnull=True) | Q(recurrence_end__gte=win_start)
     ).select_related("project", "status")[:500]
     for ev in recurring:
-        for occ in expand_recurring(ev, range_start, range_end):
+        for occ in expand_recurring(ev, range_start, range_end, tz):
             result.append({"event": ev, "start": occ, "recurring": True})
     result.sort(key=lambda x: x["start"])
     return result
@@ -336,8 +341,10 @@ def events_for_range(user, scope_code: str, range_start: dt.date, range_end: dt.
 def upcoming_events(user, scope_code: str, limit: int = 5) -> list[dict]:
     """Ближайшие (ещё не наступившие) события личного раздела с учётом повторов."""
     now = timezone.now()
-    horizon = (now + dt.timedelta(days=90)).date()
-    items = events_for_range(user, scope_code, timezone.localdate(), horizon)
+    user_timezone = get_user_timezone(user)
+    local_now = timezone.localtime(now, user_timezone)
+    horizon = (local_now + dt.timedelta(days=90)).date()
+    items = events_for_range(user, scope_code, local_now.date(), horizon)
     return [x for x in items if x["start"] >= now][:limit]
 
 

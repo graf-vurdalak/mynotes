@@ -6,6 +6,7 @@ from decimal import Decimal
 
 from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
 from apps.core.i18n import t
 from apps.planner.models import Event, Project, Status
 from apps.vehicles.models import Fine, FuelEntry, Insurance, Purchase, Service, Vehicle
@@ -42,7 +43,8 @@ def resolve_period(request) -> tuple[date | None, date | None, str]:
     (dd.mm.yyyy или ISO). Невалидные значения откатываются к 6m.
     Возвращает (start, end, ключ периода); all → (None, None).
     """
-    end = timezone.localdate()
+    user = getattr(request, "user", None)
+    end = timezone.localdate(timezone.now(), get_user_timezone(user))
     period = request.GET.get("period", DEFAULT_PERIOD)
     if period == "all":
         return None, None, "all"
@@ -83,9 +85,9 @@ def _month_label(key: str) -> str:
     return t(f"rep.month.{int(key[5:7])}")
 
 
-def _window_months(start: date | None, end: date | None, records: list[date]) -> list[str]:
+def _window_months(start: date | None, end: date | None, records: list[date], user) -> list[str]:
     """Список месяцев окна; при period=all — от самой ранней записи до сегодня."""
-    end = end or timezone.localdate()
+    end = end or timezone.localdate(timezone.now(), get_user_timezone(user))
     if start is None:
         start = min(records) if records else end
     first = _month_index(_month_key(start))
@@ -105,7 +107,7 @@ def _fuel_station_name(entry: FuelEntry) -> str:
 
 def vehicle_report_data(user, vehicles: list[Vehicle], start: date | None, end: date | None) -> dict:
     """Полный набор агрегатов отчёта Бортжурнала за окно по выбранным авто."""
-    end = end or timezone.localdate()
+    end = end or timezone.localdate(timezone.now(), get_user_timezone(user))
     vehicle_ids = [v.pk for v in vehicles]
     fuel_rows = [
         e
@@ -150,7 +152,7 @@ def vehicle_report_data(user, vehicles: list[Vehicle], start: date | None, end: 
         [e.fuel_date for e in fuel_rows]
         + [p.purchase_date for p in purchase_rows]
         + [s.service_date for s in service_rows]
-    ) if d])
+    ) if d], user)
     monthly = {key: {"month": key, "fuel": ZERO, "other": ZERO} for key in months}
 
     def bucket(d: date | None) -> dict | None:
@@ -250,7 +252,7 @@ def vehicle_report_data(user, vehicles: list[Vehicle], start: date | None, end: 
         })
 
     # Сводка страховки/штрафов (ТЗ 11.1) — активные полисы и штрафы
-    today = timezone.localdate()
+    today = timezone.localdate(timezone.now(), get_user_timezone(user))
     insurance_rows = Insurance.objects.filter(vehicle_id__in=vehicle_ids, is_deleted=False)
     active = [i for i in insurance_rows if i.end_date and i.end_date >= today]
     unpaid = [f for f in Fine.objects.filter(vehicle_id__in=vehicle_ids, is_deleted=False, status="unpaid")]
@@ -306,7 +308,7 @@ def service_forecast(user, vehicles: list[Vehicle]) -> dict | None:
     days_span = (last.service_date - first.service_date).days
     avg_days = days_span / spans if days_span > 0 else None
 
-    today = timezone.localdate()
+    today = timezone.localdate(timezone.now(), get_user_timezone(user))
     current = max(vehicle.current_mileage or 0, last.odometer)
     km_left = max(int(avg_km - (current - last.odometer)), 0) if avg_km else None
     next_date = last.service_date + timedelta(days=int(avg_days)) if avg_days else None
@@ -339,9 +341,9 @@ def service_forecast(user, vehicles: list[Vehicle]) -> dict | None:
 SECONDS_PER_DAY = 86400.0
 
 
-def _window_datetimes(start: date | None, end: date | None) -> tuple[datetime, datetime]:
-    tz = timezone.get_current_timezone()
-    end = end or timezone.localdate()
+def _window_datetimes(user, start: date | None, end: date | None) -> tuple[datetime, datetime]:
+    tz = get_user_timezone(user)
+    end = end or timezone.localdate(timezone.now(), tz)
     start_dt = timezone.make_aware(datetime.combine(start or date.min, datetime.min.time()), tz)
     end_dt = timezone.make_aware(datetime.combine(end, datetime.max.time()), tz)
     return start_dt, end_dt
@@ -364,7 +366,7 @@ def _status_at(hist: list, at: datetime, fallback):
 
 def planner_report_data(user, scope_code: str, start: date | None, end: date) -> dict:
     """Полный набор агрегатов рабочего/личного отчёта за окно (ТЗ 11.2)."""
-    start_dt, end_dt = _window_datetimes(start, end)
+    start_dt, end_dt = _window_datetimes(user, start, end)
     now = timezone.now()
     events = list(
         Event.objects.filter(user=user, scope__code=scope_code, is_deleted=False).select_related(
@@ -502,7 +504,7 @@ def planner_burndown(user, scope_code: str, start: date | None, end: date, proje
 
     project_id — конкретный проект (или None: первый проект со задачами).
     """
-    start_dt, end_dt = _window_datetimes(start, end)
+    start_dt, end_dt = _window_datetimes(user, start, end)
     projects = owned_queryset(Project, user).filter(scope__code=scope_code)
     if project_id:
         projects = projects.filter(pk=project_id)
@@ -550,7 +552,7 @@ def planner_burndown(user, scope_code: str, start: date | None, end: date, proje
 
 def planner_top_longest(user, scope_code: str, start: date | None, end: date, limit: int = 5) -> list[dict]:
     """Топ-5 самых долгих задач (завершённых) за окно."""
-    start_dt, end_dt = _window_datetimes(start, end)
+    start_dt, end_dt = _window_datetimes(user, start, end)
     qs = (
         Event.objects.filter(
             user=user, scope__code=scope_code, is_deleted=False, completed_at__isnull=False,

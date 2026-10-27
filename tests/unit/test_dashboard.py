@@ -5,8 +5,9 @@ from decimal import Decimal
 import pytest
 from django.urls import reverse
 from django.utils import timezone
+from freezegun import freeze_time
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserSettings
 from apps.vehicles import services
 from apps.vehicles.models import (
     Fine,
@@ -188,6 +189,17 @@ def test_dashboard_page_renders_empty_state(client, user):
     assert response.status_code == 200
     content = response.content.decode("utf-8")
     assert "fleet_empty" not in content
+
+
+@pytest.mark.django_db
+def test_dashboard_clock_uses_user_timezone(client, user):
+    UserSettings.objects.create(user=user, timezone="America/Los_Angeles")
+    client.force_login(user)
+
+    with timezone.override("Europe/Moscow"), freeze_time("2026-12-01T01:00:00+00:00"):
+        response = client.get(reverse("core:dashboard"))
+
+    assert response.context["today_str"].startswith("Понедельник, 30 ")
 
 
 @pytest.mark.django_db

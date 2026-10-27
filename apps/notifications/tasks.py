@@ -13,6 +13,7 @@ from datetime import datetime, time, timedelta
 from celery import shared_task
 from django.utils import timezone
 
+from apps.accounts.timezones import get_timezone, get_user_timezone
 from apps.core.i18n import t
 from apps.planner.models import Event, Scope
 from apps.planner.services import expand_recurring, get_scope
@@ -39,7 +40,7 @@ def _fire_event_reminder(event: Event, when, minutes: int) -> None:
     body = t(
         "notif.event.body",
         title=event.title,
-        when=timezone.localtime(when).strftime("%d.%m.%Y %H:%M"),
+        when=timezone.localtime(when, get_user_timezone(event.user)).strftime("%d.%m.%Y %H:%M"),
         minutes=minutes,
     )
     notify(
@@ -80,7 +81,14 @@ def scan_event_reminders() -> int:
         if minutes is None:
             continue
         window_end = now + timedelta(days=LOOKAHEAD_DAYS, minutes=minutes)
-        occurrences = [o for o in expand_recurring(event, now.date(), window_end.date()) if o > now]
+        user_timezone = get_user_timezone(event.user)
+        local_now = timezone.localtime(now, user_timezone)
+        local_window_end = timezone.localtime(window_end, user_timezone)
+        occurrences = [
+            o for o in expand_recurring(
+                event, local_now.date(), local_window_end.date(), user_timezone
+            ) if o > now
+        ]
         if not occurrences:
             continue
         occurrence = occurrences[0]
@@ -120,12 +128,16 @@ def _scan_insurances() -> int:
     """
     from apps.vehicles.models import Insurance
 
-    today = timezone.localdate()
+    now = timezone.now()
     fired = 0
     insurances = Insurance.objects.filter(
-        is_deleted=False, reminder_created=False, end_date__isnull=False, end_date__gte=today
-    ).select_related("user", "vehicle")
+        is_deleted=False, reminder_created=False, end_date__isnull=False
+    ).select_related("user", "user__settings", "vehicle")
     for ins in insurances:
+        user_timezone = get_user_timezone(ins.user)
+        today = timezone.localdate(now, user_timezone)
+        if ins.end_date < today:
+            continue
         lead = getattr(ins.user.settings, "insurance_reminder_days", 30) if hasattr(ins.user, "settings") else 30
         days_left = (ins.end_date - today).days
         if days_left > lead:
@@ -141,7 +153,9 @@ def _scan_insurances() -> int:
                 user=ins.user, scope=scope,
                 title=t("notif.insurance.event", when=_fmt_date(ins.end_date)),
                 event_type="reminder",
-                start_at=timezone.make_aware(datetime.combine(ins.end_date, time(0, 0))),
+                start_at=timezone.make_aware(
+                    datetime.combine(ins.end_date, time(0, 0)), user_timezone
+                ),
             )
         except Exception:
             logger.exception("Авто-событие для страховки %s не создано", ins.pk)
@@ -159,13 +173,18 @@ def _scan_planned() -> int:
     fired = 0
     events = PlannedEvent.objects.filter(
         is_deleted=False, is_done=False
-    ).select_related("user", "vehicle")
+    ).select_related("user", "user__settings", "vehicle")
     for pe in events:
         lead = getattr(pe.user.settings, "plan_reminder_days", 7) if hasattr(pe.user, "settings") else 7
         reason = None
         if pe.reminder_type in ("date", "both") and pe.planned_date:
             if now <= pe.planned_date <= now + timedelta(days=lead):
-                reason = t("notif.plan.date", when=timezone.localtime(pe.planned_date).strftime("%d.%m.%Y %H:%M"))
+                reason = t(
+                    "notif.plan.date",
+                    when=timezone.localtime(
+                        pe.planned_date, get_user_timezone(pe.user)
+                    ).strftime("%d.%m.%Y %H:%M"),
+                )
         if reason is None and pe.reminder_type in ("mileage", "both") and pe.reminder_mileage:
             current = pe.vehicle.current_mileage or 0
             if current >= pe.reminder_mileage:
@@ -209,11 +228,12 @@ def _scan_transport_tax() -> int:
     """Транспортный налог: раз в год на дату из UserSettings (ТЗ 4.2.8)."""
     from apps.accounts.models import UserSettings
 
-    today = timezone.localdate()
+    now = timezone.now()
     fired = 0
-    for s in UserSettings.objects.filter(
-        transport_tax_month=today.month, transport_tax_day=today.day
-    ).select_related("user"):
+    for s in UserSettings.objects.select_related("user"):
+        today = timezone.localdate(now, get_timezone(s.timezone))
+        if s.transport_tax_month != today.month or s.transport_tax_day != today.day:
+            continue
         n = notify(s.user, "vehicle.transport_tax", t("notif.tax.title"), t("notif.tax.body"),
                    channels=("email", "telegram"), bot="vehicle",
                    dedup_within=timedelta(days=300))

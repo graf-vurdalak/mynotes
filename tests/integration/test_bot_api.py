@@ -9,6 +9,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone as django_timezone
+from freezegun import freeze_time
 
 from apps.accounts.models import AuthToken, UserSettings
 from apps.accounts.tokens import issue_token
@@ -177,6 +178,25 @@ def test_ingest_interprets_naive_datetime_in_user_timezone(
     assert django_timezone.localtime(saved_datetime, dubai) == datetime(
         2026, 12, 1, 14, 40, tzinfo=dubai
     )
+
+
+@pytest.mark.django_db
+def test_event_list_returns_user_local_datetime(client, user, token):
+    from apps.planner.models import Event
+    from apps.planner.services import get_scope
+
+    UserSettings.objects.update_or_create(user=user, defaults={"timezone": "Asia/Dubai"})
+    scope = get_scope(user, "personal")
+    Event.objects.create(
+        user=user, scope=scope, title="Встреча",
+        start_at=datetime(2026, 12, 1, 10, 40, tzinfo=datetime_timezone.utc),
+    )
+
+    with freeze_time("2026-12-01T10:00:00+00:00"):
+        response = ingest(client, token, "planner", "list_events", {"scope": "personal"})
+
+    assert response.status_code == 200
+    assert response.json()["data"][0]["start"].startswith("2026-12-01T14:40:00+04:00")
 
 
 # --- references ------------------------------------------------------------

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from uuid import uuid4
+from urllib.parse import urlsplit
 
 import pytest
 from allauth.account.models import EmailAddress, EmailConfirmationHMAC
@@ -28,6 +29,99 @@ def test_login_page_has_csrf(client):
 
 
 @pytest.mark.django_db
+def test_password_reset_page_is_centered_and_linked_from_login(client):
+    response = client.get(reverse("login"))
+    assert f'href="{reverse("account_reset_password")}"'.encode() in response.content
+
+    response = client.get(reverse("account_reset_password"))
+    assert response.status_code == 200
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert any(template.name == "accounts/password_reset.html" for template in response.templates)
+    assert b'csrfmiddlewaretoken' in response.content
+
+
+@pytest.mark.django_db
+def test_password_reset_done_page_is_centered(client):
+    response = client.get(reverse("account_reset_password_done"))
+
+    assert response.status_code == 200
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert "Проверьте почту" in content
+    assert any(
+        template.name == "accounts/password_reset_done.html"
+        for template in response.templates
+    )
+
+
+@pytest.mark.django_db
+def test_password_reset_from_key_page_uses_styled_template(client):
+    response = client.get(
+        reverse(
+            "account_reset_password_from_key",
+            kwargs={"uidb36": "invalid", "key": "invalid"},
+        )
+    )
+
+    assert response.status_code == 200
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert "Ссылка недействительна" in content
+    assert any(
+        template.name == "accounts/password_reset_from_key.html"
+        for template in response.templates
+    )
+
+
+@pytest.mark.django_db
+def test_password_reset_from_key_done_page_is_centered(client):
+    response = client.get(reverse("account_reset_password_from_key_done"))
+
+    assert response.status_code == 200
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert "Пароль успешно изменён" in content
+    assert f'href="{reverse("login")}"'.encode() in response.content
+    assert any(
+        template.name == "accounts/password_reset_from_key_done.html"
+        for template in response.templates
+    )
+
+
+@pytest.mark.django_db
+def test_password_reset_request_sends_email(client, mailoutbox):
+    email = "password-reset@example.org"
+    user = get_user_model().objects.create_user(email=email, password="strong-password-742")
+    EmailAddress.objects.create(user=user, email=email, primary=True, verified=True)
+
+    response = client.post(reverse("account_reset_password"), {"email": email})
+
+    assert response.status_code == 302
+    assert response.url == reverse("account_reset_password_done")
+    assert len(mailoutbox) == 1
+    assert mailoutbox[0].to == [email]
+    assert "/accounts/password/reset/key/" in mailoutbox[0].body
+
+    reset_link = next(
+        part.strip("<>().,")
+        for part in mailoutbox[0].body.split()
+        if "/accounts/password/reset/key/" in part
+    )
+    response = client.get(urlsplit(reset_link).path, follow=True)
+
+    assert response.status_code == 200
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert 'name="password1"' in content
+    assert 'name="password2"' in content
+    assert any(
+        template.name == "accounts/password_reset_from_key.html"
+        for template in response.templates
+    )
+
+
+@pytest.mark.django_db
 def test_login_page_has_yandex_oauth_link(client):
     url = reverse("login")
     response = client.get(url)
@@ -52,7 +146,9 @@ def test_signup_shows_email_verification_notice(client, mailoutbox):
 
     response = client.get(response.url)
     assert response.status_code == 200
-    assert "Письмо с подтверждением отправлено на ваш email" in response.content.decode("utf-8")
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert "Письмо с подтверждением отправлено на ваш email" in content
     assert len(mailoutbox) == 1
 
 
@@ -74,6 +170,13 @@ def test_email_confirmation_link_verifies_address_and_allows_login(client):
 
     response = client.get(url)
     assert response.status_code == 200
+    content = response.content.decode("utf-8")
+    assert 'class="min-h-screen flex items-center justify-center' in content
+    assert "Подтвердить email" in content
+    assert any(
+        template.name == "accounts/email_confirm.html"
+        for template in response.templates
+    )
 
     response = client.post(url)
     assert response.status_code == 302

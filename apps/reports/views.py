@@ -2,6 +2,7 @@ from django.http import Http404
 from django.shortcuts import render
 from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
 from apps.core.i18n import t
 from apps.planner.models import Project
 
@@ -64,7 +65,8 @@ def _pdf_meta(request, ctx: ExportContext, period: str, dataset: str) -> list[st
             if project:
                 lines.append(f'{t("rep.filter.project")}: {project.title}')
         lines.append(f'{t("rep.scope.title")}: {t(f"rep.scope.{ctx.scope_code}")}')
-    lines.append(f'{t("exp.meta.generated")}: {timezone.localtime().strftime("%d.%m.%Y %H:%M")}')
+    generated_at = timezone.localtime(timezone.now(), get_user_timezone(request.user))
+    lines.append(f'{t("exp.meta.generated")}: {generated_at.strftime("%d.%m.%Y %H:%M")}')
     return lines
 
 
@@ -76,7 +78,12 @@ def export_pdf(request, dataset):
     _, _, period = resolve_period(request)
     ctx = _export_context(request)
     payload = builder(ctx)
-    return pdf_response(payload, f"mynotes-{dataset}.pdf", _pdf_meta(request, ctx, period, dataset))
+    return pdf_response(
+        payload,
+        f"mynotes-{dataset}.pdf",
+        _pdf_meta(request, ctx, period, dataset),
+        get_user_timezone(request.user),
+    )
 
 
 def vehicle_report(request):

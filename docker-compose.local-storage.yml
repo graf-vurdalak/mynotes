@@ -1,0 +1,14 @@
+services:
+  web:
+    environment:
+      S3_ENDPOINT: ""
+    # Allow emergency recovery when S3 itself is unhealthy.
+    depends_on: !reset []
+
+  worker:
+    environment:
+      S3_ENDPOINT: ""
+    # Allow emergency recovery when S3 itself is unhealthy.
+    depends_on: !reset []
+    volumes:
+      - media_volume:/app/media

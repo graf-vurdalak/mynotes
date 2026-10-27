@@ -40,7 +40,7 @@ def vehicle_list(request):
         services.owned_queryset(Vehicle, request.user).select_related("brand", "model")
     )
 
-    now = timezone.now().date()
+    now = timezone.localdate()
     month_start = now.replace(day=1)
     deadline = now + timedelta(days=30)
 
@@ -151,7 +151,7 @@ def vehicle_detail(request, pk):
     fuel_entries = list(entries_qs)
     services.attach_consumption(fuel_entries)
 
-    now = timezone.now().date()
+    now = timezone.localdate()
     month_start = now.replace(day=1)
     month_summary = services.fuel_summary(vehicle.pk, since=month_start)
     all_summary = services.fuel_summary(vehicle.pk)
@@ -199,7 +199,7 @@ def vehicle_detail(request, pk):
     elif plan_filter == "done":
         plans_qs = plans_qs.filter(is_done=True)
     plans = list(plans_qs)
-    services.attach_plan_context(plans, vehicle.current_mileage)
+    services.attach_plan_context(plans, vehicle.current_mileage, request.user)
 
     context = {
         "vehicle": vehicle,
@@ -225,13 +225,13 @@ def vehicle_detail(request, pk):
         "fine_all": services.fine_summary(vehicle.pk),
         "fine_year": services.fine_summary(vehicle.pk, year=now.year),
         "insurances": insurances,
-        "insurance_summary": services.insurance_summary(vehicle.pk),
+        "insurance_summary": services.insurance_summary(vehicle.pk, request.user),
         "today": now,
         "insurance_deadline": now + timedelta(days=30),
         "plans": plans,
         "plan_filter": plan_filter,
         "plan_summary": services.planned_summary(
-            vehicle.pk, vehicle.current_mileage
+            vehicle.pk, vehicle.current_mileage, request.user
         ),
         "stats": services.stats_overview(vehicle.pk),
     }
@@ -325,7 +325,7 @@ def fuel_create(request, pk):
     vehicle = _get_vehicle(request.user, pk)
     initial = {
         "vehicle": vehicle,
-        "fuel_date": timezone.now().date(),
+        "fuel_date": timezone.localdate(),
         "odometer": services.get_latest_odometer(vehicle.pk) or vehicle.current_mileage or 0,
         "fuel_type": vehicle.fuel_type,
     }
@@ -428,7 +428,7 @@ def purchase_create(request, pk):
     vehicle = _get_vehicle(request.user, pk)
     initial = {
         "vehicle": vehicle,
-        "purchase_date": timezone.now().date(),
+        "purchase_date": timezone.localdate(),
         "odometer": services.get_latest_odometer(vehicle.pk)
         or vehicle.current_mileage
         or 0,
@@ -506,7 +506,7 @@ def service_create(request, pk):
     vehicle = _get_vehicle(request.user, pk)
     initial = {
         "vehicle": vehicle,
-        "service_date": timezone.now().date(),
+        "service_date": timezone.localdate(),
         "odometer": services.get_latest_odometer(vehicle.pk)
         or vehicle.current_mileage
         or 0,
@@ -582,7 +582,7 @@ def service_delete(request, pk, service_pk):
 @login_required
 def fine_create(request, pk):
     vehicle = _get_vehicle(request.user, pk)
-    initial = {"vehicle": vehicle, "fine_date": timezone.now().date()}
+    initial = {"vehicle": vehicle, "fine_date": timezone.localdate()}
     form = FineForm(
         request.POST or None,
         request.FILES or None,
@@ -736,7 +736,7 @@ def fine_status(request, pk, fine_pk):
                     request.POST.get("paid_at")
                     or fine.paid_at
                     or fine.fine_date
-                    or timezone.now().date()
+                    or timezone.localdate()
                 )
             else:
                 fine.paid_at = None
@@ -756,7 +756,7 @@ def plan_create(request, pk):
         request.POST or None,
         initial={
             "vehicle": vehicle,
-            "planned_date": timezone.now(),
+            "planned_date": timezone.localtime(timezone.now()),
         },
         user=request.user,
     )

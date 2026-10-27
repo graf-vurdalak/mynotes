@@ -6,7 +6,7 @@ import datetime as dt
 import pytest
 from django.utils import timezone
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserSettings
 from apps.planner import services
 from apps.planner.models import Comment, Event, Project, Scope, Status
 
@@ -493,6 +493,19 @@ def test_event_form_page_renders(client, user, personal):
     e = Event.objects.create(user=user, scope=personal, title="Сущ", start_at=_aware(dt.date(2026, 10, 10)))
     resp = client.get(f"/planner/personal/event/{e.pk}/edit/")
     assert resp.status_code == 200
+
+
+def test_event_edit_prefills_user_local_time(client, user, personal):
+    UserSettings.objects.create(user=user, timezone="Asia/Yekaterinburg")
+    event = Event.objects.create(
+        user=user, scope=personal, title="Встреча",
+        start_at=dt.datetime(2026, 12, 1, 10, 40, tzinfo=dt.timezone.utc),
+    )
+    make_client(client, user)
+
+    response = client.get(f"/planner/personal/event/{event.pk}/edit/")
+
+    assert response.context["form"].initial["time_start"] == "15:40"
 
 
 def test_scope_picker_page(client, user):

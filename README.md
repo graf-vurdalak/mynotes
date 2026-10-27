@@ -1,11 +1,18 @@
 # Мои записи (MyNotes)
 
-Единая платформа: Бортжурнал автомобиля + Записная книжка.
+MyNotes — русскоязычное веб-приложение для автомобильного бортжурнала и личной /
+рабочей записной книжки. Интерфейс адаптирован для мобильных устройств; данные
+можно вносить в веб-приложении и через Telegram-ботов.
 
-Бортжурнал — учёт расходов, событий и плановых работ, связанных с автомобилем.
-Записная книжка — планировщик личных и рабочих событий/задач.
+Проект создан с использованием ИИ-инструментов под руководством Дениса Соколова. Распространяется под лицензией MIT.
 
-Данные вносятся через веб-интерфейс (mobile-first) и через Telegram-ботов.
+## Возможности
+
+- Бортжурнал автомобилей: расходы, топливо, обслуживание, штрафы и страхование.
+- Планировщик задач, событий и проектов.
+- Telegram-боты для бортжурнала и планировщика, включая быстрый ввод.
+- Напоминания и уведомления, отчёты, PDF и экспорт.
+- Приватное хранение загружаемых файлов через приложение.
 
 ## Стек
 
@@ -16,31 +23,41 @@
 - **Auth:** django-allauth (email + Яндекс OAuth) + django-otp (2FA)
 - **Bots:** aiogram 3.x
 
-## Быстрый старт
+## Быстрый старт (Docker)
 
 ### 1. Клонирование
 
-```bash
+```powershell
 git clone <repo_url>
 cd mynotes
 ```
 
-### 2. Настройка окружения
+### 2. Настройка локальной среды
 
-```bash
-cp .env.example .env
-# Отредактируйте .env
+```powershell
+Copy-Item .env.example .env
+# Задайте SITE_DOMAIN=localhost и локальные SECRET_KEY и POSTGRES_PASSWORD.
+# Не используйте секреты production.
 ```
 
-### 3. Запуск через Docker (рекомендуется)
+### 3. Запуск dev Compose
 
-```bash
-make docker-up
+```powershell
+docker compose -f docker-compose.dev.yml up --build -d
+docker compose -f docker-compose.dev.yml exec web python manage.py migrate
+docker compose -f docker-compose.dev.yml exec web python manage.py createsuperuser
 ```
 
-Откройте http://localhost:8000/accounts/login/
+Откройте http://localhost:8001/accounts/login/. Письма для локальной разработки
+можно просматривать в MailHog: http://localhost:8025/. Остановить сервисы без
+удаления данных: `docker compose -f docker-compose.dev.yml down`.
 
-### 4. Локальный запуск (без Docker)
+Compose запускает PostgreSQL, Redis, Django, Celery, MailHog и SeaweedFS для файлов.
+Telegram-боты опциональны и запускаются с профилем `bots`; см.
+[руководство разработки](docs/development.md). Не используйте dev Compose для
+production.
+
+## Локальный запуск без Docker
 
 ```bash
 pip install -r requirements/dev.txt
@@ -49,30 +66,17 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
-## Структура проекта
-
-```
-mynotes/
-├── config/            # настройки, wsgi, asgi, celery
-├── apps/              # Django-приложения
-│   ├── accounts/      # auth, профили, токены, 2FA
-│   ├── vehicles/      # бортжурнал
-│   ├── planner/       # записная книжка
-│   └── ...
-├── telegram_bots/     # aiogram-боты
-├── locale/            # локализация
-├── templates/         # Django templates
-├── static/
-├── tests/
-├── docker/
-├── docs/              # ТЗ и документация
-└── requirements/
-```
-
 ## Документация
 
-Полное техническое задание: [docs/TZ.md](docs/TZ.md)
-Деплой, S3-хранилище файлов (SeaweedFS вместо недоступных образов MinIO), бэкап/откат: [docs/deployment.md](docs/deployment.md)
+- [Частые вопросы](FAQ.md)
+- [Локальная разработка и тесты](docs/development.md)
+- [Тестирование и CI/CD](docs/testing-ci.md)
+- [Установка и обновление production](INSTALL.md)
+- [Деплой, S3-хранилище и резервные копии](docs/deployment.md)
+- [Архитектура](ARCHITECTURE.md) и [схема БД](DB_SCHEMA.md)
+- [Участие в разработке](CONTRIBUTING.md) и [локализация](LOCALIZATION.md)
+- [Инструкция по Telegram-ботам](telegram_bots/README.md)
+- [Техническое задание](docs/TZ.md)
 
 ## Лицензия
 

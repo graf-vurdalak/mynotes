@@ -711,7 +711,7 @@ class FineForm(forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         if cleaned.get("status") == "paid" and not cleaned.get("paid_at"):
-            cleaned["paid_at"] = cleaned.get("fine_date") or timezone.now().date()
+            cleaned["paid_at"] = cleaned.get("fine_date") or timezone.localdate()
         return cleaned
 
     def save(self, commit=True):
@@ -986,5 +986,4 @@ class PlannedEventForm(forms.ModelForm):
         if commit:
             event.save()
         return event
-
 

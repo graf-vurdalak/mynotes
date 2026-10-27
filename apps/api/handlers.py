@@ -16,6 +16,7 @@ from django.utils.dateparse import parse_date, parse_datetime
 from django.utils.timezone import make_aware
 from rest_framework.exceptions import ValidationError
 
+from apps.accounts.timezones import get_user_timezone
 from apps.planner import services as planner_services
 from apps.planner.models import Event, Project, Scope, Status
 from apps.references.models import FuelStation
@@ -95,6 +96,10 @@ def _dt_val(payload, key):
     if timezone.is_naive(parsed):
         parsed = make_aware(parsed, timezone.get_current_timezone())
     return parsed
+
+
+def _local_iso(value, user):
+    return timezone.localtime(value, get_user_timezone(user)).isoformat() if value else None
 
 
 def _str(payload, key, required=False, default=""):
@@ -425,7 +430,7 @@ def planner_list_events(user, payload):
         {
             "id": str(x["event"].id),
             "title": x["event"].title,
-            "start": x["start"].isoformat(),
+            "start": _local_iso(x["start"], user),
             "recurring": x["recurring"],
             "project": x["event"].project.title if x["event"].project else None,
         }
@@ -444,7 +449,7 @@ def planner_list_tasks(user, payload):
             "title": e.title,
             "status": e.status.code if e.status else None,
             "priority": e.priority,
-            "due_at": e.due_at.isoformat() if e.due_at else None,
+            "due_at": _local_iso(e.due_at, user),
         }
         for e in qs.order_by("status__sort_order", "-created_at")[:30]
     ]
@@ -461,7 +466,7 @@ def planner_search(user, payload):
             "title": e.title,
             "scope": e.scope.code,
             "status": e.status.name if e.status else None,
-            "start": e.start_at.isoformat() if e.start_at else None,
+            "start": _local_iso(e.start_at, user),
         }
         for e in events
     ]

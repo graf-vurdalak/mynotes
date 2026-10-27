@@ -5,6 +5,7 @@ from django.http import FileResponse, Http404
 from django.shortcuts import render
 from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
 from apps.core.i18n import t
 from apps.core.media import file_owner_ids
 from apps.vehicles import services
@@ -13,8 +14,8 @@ _WEEKDAYS = tuple(t(f"date.wd_full.{i}") for i in range(1, 8))
 _MONTHS = (None,) + tuple(t(f"date.month_gen.{i}") for i in range(1, 13))
 
 
-def _greeting():
-    hour = timezone.now().hour
+def _greeting(now):
+    hour = now.hour
     if hour < 12:
         return t("dashboard.greeting_morning")
     if hour < 18:
@@ -31,7 +32,7 @@ def _format_date(d):
 def dashboard(request):
     data = services.dashboard_overview(request.user)
 
-    now = timezone.now()
+    now = timezone.localtime(timezone.now(), get_user_timezone(request.user))
     dates_str = _format_date(now.date())
     reminder_count = (
         len(data["expiring_insurances"])
@@ -41,7 +42,7 @@ def dashboard(request):
 
     context = {
         **data,
-        "greeting": _greeting(),
+        "greeting": _greeting(now),
         "today_str": dates_str,
         "reminders_count": reminder_count,
     }

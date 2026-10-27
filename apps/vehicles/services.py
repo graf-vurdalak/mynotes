@@ -14,6 +14,7 @@ from decimal import Decimal
 from django.db.models import Max, Q
 from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
 from apps.references.models import FuelStation
 
 from .models import (
@@ -303,11 +304,12 @@ def fine_summary(vehicle_id, year=None) -> dict:
     }
 
 
-def insurance_summary(vehicle_id) -> dict:
+def insurance_summary(vehicle_id, user=None) -> dict:
     """Агрегаты по страховкам: активные, истекающие скоро, просроченные и стоимость."""
     qs = Insurance.objects.filter(vehicle_id=vehicle_id, is_deleted=False)
     insurances = list(qs)
-    today = timezone.now().date()
+    user_timezone = get_user_timezone(user) if user is not None else timezone.get_current_timezone()
+    today = timezone.localdate(timezone.now(), user_timezone)
     deadline = today + timedelta(days=30)
     active = [
         i for i in insurances if i.end_date and i.end_date >= today
@@ -354,7 +356,9 @@ def sync_fine_purchase(fine: Fine, user, link: bool) -> Fine:
     category = PurchaseCategory.objects.filter(
         Q(user__isnull=True) | Q(user=user), name__iexact="Штрафы"
     ).first()
-    pdate = fine.paid_at or fine.fine_date or timezone.now().date()
+    pdate = fine.paid_at or fine.fine_date or timezone.localdate(
+        timezone.now(), get_user_timezone(user)
+    )
 
     if fine.purchase_id:
         purchase = fine.purchase
@@ -389,10 +393,11 @@ def sync_fine_purchase(fine: Fine, user, link: bool) -> Fine:
     return fine
 
 
-def attach_plan_context(events, current_mileage=None) -> list:
+def attach_plan_context(events, current_mileage=None, user=None) -> list:
     """Добавляет событиям атрибуты для карточек: km_left (по пробегу) и days_left (по дате)."""
     current = current_mileage or 0
-    today = timezone.now().date()
+    user_timezone = get_user_timezone(user) if user is not None else timezone.get_current_timezone()
+    today = timezone.localdate(timezone.now(), user_timezone)
     for e in events:
         e.km_left = None
         e.days_left = None
@@ -403,7 +408,7 @@ def attach_plan_context(events, current_mileage=None) -> list:
     return events
 
 
-def planned_summary(vehicle_id, current_mileage=None) -> dict:
+def planned_summary(vehicle_id, current_mileage=None, user=None) -> dict:
     """Агрегаты по плановым событиям: бюджет и ближайшие.
 
     Возвращает сумму предполагаемых расходов и количество невыполненных
@@ -420,7 +425,7 @@ def planned_summary(vehicle_id, current_mileage=None) -> dict:
         (e for e in pending if e.reminder_mileage is not None),
         key=lambda e: e.reminder_mileage,
     )
-    attach_plan_context(pending, current_mileage)
+    attach_plan_context(pending, current_mileage, user)
     return {
         "count": len(events),
         "pending_count": len(pending),
@@ -436,7 +441,7 @@ def monthly_cost(vehicle_id, months: int = 6) -> list[dict]:
     ``month`` ("YYYY-MM"), ``fuel``, ``purchase``, ``service``, ``fines``
     и ``total``.
     """
-    today = timezone.now().date()
+    today = timezone.localdate()
     base = today.replace(day=1)
 
     def shift(count=0):
@@ -546,7 +551,7 @@ def dashboard_overview(user) -> dict:
     за месяц, последние события) и блока уведомлений (истекающие страховки,
     неоплаченные штрафы, ближайшие плановые события).
     """
-    now = timezone.now().date()
+    now = timezone.localdate(timezone.now(), get_user_timezone(user))
     month_start = now.replace(day=1)
     deadline = now + timedelta(days=30)
 
@@ -664,7 +669,7 @@ def _dashboard_recent_events(user, limit: int = 3) -> list[dict]:
             "title": e.station.name if e.station else "fuel",
             "detail": f"{e.volume_liters or 0} л · {e.total_cost or 0} ₽",
             "vehicle": e.vehicle,
-            "date": e.fuel_date or timezone.now().date(),
+            "date": e.fuel_date or timezone.localdate(timezone.now(), get_user_timezone(user)),
         })
     for e in Service.objects.filter(
         user=user, is_deleted=False
@@ -674,7 +679,7 @@ def _dashboard_recent_events(user, limit: int = 3) -> list[dict]:
             "title": e.work_description or str(e.pk),
             "detail": f"{e.amount or 0} ₽",
             "vehicle": e.vehicle,
-            "date": e.service_date or timezone.now().date(),
+            "date": e.service_date or timezone.localdate(timezone.now(), get_user_timezone(user)),
         })
     for e in Purchase.objects.filter(
         user=user, is_deleted=False
@@ -684,7 +689,7 @@ def _dashboard_recent_events(user, limit: int = 3) -> list[dict]:
             "title": e.title,
             "detail": f"{e.amount or 0} ₽",
             "vehicle": e.vehicle,
-            "date": e.purchase_date or timezone.now().date(),
+            "date": e.purchase_date or timezone.localdate(timezone.now(), get_user_timezone(user)),
         })
     for e in Fine.objects.filter(
         user=user, is_deleted=False
@@ -694,7 +699,7 @@ def _dashboard_recent_events(user, limit: int = 3) -> list[dict]:
             "title": e.description or e.decision_number or str(e.pk),
             "detail": f"{e.amount or 0} ₽",
             "vehicle": e.vehicle,
-            "date": e.fine_date or timezone.now().date(),
+            "date": e.fine_date or timezone.localdate(timezone.now(), get_user_timezone(user)),
         })
 
     events.sort(key=lambda x: x["date"], reverse=True)
@@ -750,5 +755,3 @@ def stats_overview(vehicle_id) -> dict:
         "category_max": max_cat or Decimal(1),
         "mileage": mileage,
     }
-
-

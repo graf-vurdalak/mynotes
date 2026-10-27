@@ -9,10 +9,8 @@ from apps.core.i18n import t
 
 import mimetypes
 from uuid import uuid4
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from django.conf import settings
-from django.core.exceptions import ObjectDoesNotExist
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.utils import timezone
 from django_ratelimit.core import is_ratelimited
@@ -23,6 +21,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from apps.accounts.timezones import get_user_timezone
 from apps.planner.forms import MAX_UPLOAD_SIZE, detect_upload_type
 from apps.notifications.services import bind_chat
 
@@ -114,11 +113,7 @@ class BotIngestView(BotAPIView):
         action = body.get("action")
         if not module or not action:
             raise ValidationError(t("api.err_need_fields"))
-        try:
-            user_timezone = ZoneInfo(request.user.settings.timezone)
-        except (ObjectDoesNotExist, ZoneInfoNotFoundError, ValueError):
-            user_timezone = None
-        with timezone.override(user_timezone):
+        with timezone.override(get_user_timezone(request.user)):
             result = handlers.dispatch(module, action, request.user, body.get("payload") or {})
         return Response(result, status=status.HTTP_200_OK)
 

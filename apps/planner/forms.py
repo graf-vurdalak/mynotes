@@ -3,7 +3,9 @@ import re
 
 from django import forms
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
 from .models import Comment, Event, Project, Status
 from .services import WEEKDAY_NAMES
 
@@ -137,10 +139,10 @@ class RecurrenceMixin(forms.Form):
         until = self.cleaned_data.get("recurrence_until")
         import datetime as dt
 
-        from django.utils import timezone
-
         obj.recurrence_end = (
-            timezone.make_aware(dt.datetime.combine(until, dt.time(23, 59))) if until else None
+            timezone.make_aware(
+                dt.datetime.combine(until, dt.time(23, 59)), get_user_timezone(self.user)
+            ) if until else None
         )
         obj.recurrence_count = self.cleaned_data.get("recurrence_count")
 
@@ -155,7 +157,9 @@ class RecurrenceMixin(forms.Form):
                 if part.startswith("INTERVAL="):
                     self.initial["recurrence_interval"] = int(part.split("=", 1)[1])
         if self.instance.recurrence_end:
-            self.initial["recurrence_until"] = self.instance.recurrence_end.astimezone().date()
+            self.initial["recurrence_until"] = timezone.localtime(
+                self.instance.recurrence_end, get_user_timezone(self.user)
+            ).date()
         self.initial["recurrence_count"] = self.instance.recurrence_count
 
 
@@ -202,7 +206,8 @@ class EventForm(RecurrenceMixin, PlannerFormMixin, forms.ModelForm):
         if not self.instance._state.adding:
             import datetime as dt
 
-            local = self.instance.start_at.astimezone() if self.instance.start_at else None
+            user_timezone = get_user_timezone(self.user)
+            local = timezone.localtime(self.instance.start_at, user_timezone) if self.instance.start_at else None
             if local:
                 self.initial["date_start"] = local.strftime("%Y-%m-%d")
                 if local.time() != dt.time(0, 0):
@@ -211,7 +216,7 @@ class EventForm(RecurrenceMixin, PlannerFormMixin, forms.ModelForm):
                 else:
                     self.initial["all_day"] = True
             if self.instance.end_at:
-                lend = self.instance.end_at.astimezone()
+                lend = timezone.localtime(self.instance.end_at, user_timezone)
                 self.initial["date_end"] = lend.strftime("%Y-%m-%d")
                 self.initial["time_end"] = lend.strftime("%H:%M")
             self.prefill_recurrence()
@@ -222,7 +227,6 @@ class EventForm(RecurrenceMixin, PlannerFormMixin, forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         self._recurrence_rule = self.build_recurrence_rule()
-        from django.utils import timezone
         import datetime as dt
 
         d_start = cleaned.get("date_start")
@@ -230,12 +234,16 @@ class EventForm(RecurrenceMixin, PlannerFormMixin, forms.ModelForm):
             if cleaned.get("all_day"):
                 cleaned["time_start"] = None
             t_start = cleaned.get("time_start") or dt.time(0, 0)
-            start_dt = timezone.make_aware(dt.datetime.combine(d_start, t_start))
+            start_dt = timezone.make_aware(
+                dt.datetime.combine(d_start, t_start), get_user_timezone(self.user)
+            )
             cleaned["_start_dt"] = start_dt
             d_end = cleaned.get("date_end")
             if d_end:
                 t_end = None if cleaned.get("all_day") else (cleaned.get("time_end") or dt.time(23, 59))
-                end_dt = timezone.make_aware(dt.datetime.combine(d_end, t_end))
+                end_dt = timezone.make_aware(
+                    dt.datetime.combine(d_end, t_end), get_user_timezone(self.user)
+                )
                 if end_dt < start_dt:
                     raise ValidationError(t("pl.end_before_start"))
                 cleaned["_end_dt"] = end_dt
@@ -305,10 +313,13 @@ class TaskForm(RecurrenceMixin, PlannerFormMixin, forms.ModelForm):
             self._prefill()
 
     def _prefill(self):
+        user_timezone = get_user_timezone(self.user)
         if self.instance.start_at:
-            self.initial["date_start"] = self.instance.start_at.astimezone().strftime("%Y-%m-%d")
+            self.initial["date_start"] = timezone.localtime(
+                self.instance.start_at, user_timezone
+            ).strftime("%Y-%m-%d")
         if self.instance.due_at:
-            local = self.instance.due_at.astimezone()
+            local = timezone.localtime(self.instance.due_at, user_timezone)
             self.initial["date_due"] = local.strftime("%Y-%m-%d")
             self.initial["time_due"] = local.strftime("%H:%M")
         if self.instance.estimated_minutes:
@@ -321,16 +332,18 @@ class TaskForm(RecurrenceMixin, PlannerFormMixin, forms.ModelForm):
     def clean(self):
         cleaned = super().clean()
         self._recurrence_rule = self.build_recurrence_rule()
-        from django.utils import timezone
         import datetime as dt
 
         if cleaned.get("date_start"):
             cleaned["_start_dt"] = timezone.make_aware(
-                dt.datetime.combine(cleaned["date_start"], dt.time(9, 0))
+                dt.datetime.combine(cleaned["date_start"], dt.time(9, 0)),
+                get_user_timezone(self.user),
             )
         if cleaned.get("date_due"):
             t = cleaned.get("time_due") or dt.time(18, 0)
-            cleaned["_due_dt"] = timezone.make_aware(dt.datetime.combine(cleaned["date_due"], t))
+            cleaned["_due_dt"] = timezone.make_aware(
+                dt.datetime.combine(cleaned["date_due"], t), get_user_timezone(self.user)
+            )
         return cleaned
 
     def save(self, commit=True):

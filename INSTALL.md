@@ -55,9 +55,10 @@
    IMAGE_TAG=latest
    ```
 
-   Остальные внешние реквизиты (SMTP, OAuth, Telegram, Sentry) задаются по мере
-   настройки соответствующих сервисов. Не публикуйте `.env`, `s3-prod.json` или
-   значения секретов в логах и сообщениях.
+   Полный перечень параметров и плейсхолдеров приведён в tracked-шаблоне
+   [`.env.prod.template`](.env.prod.template); скрипт генерации подставляет значения
+   `<GEN:...>`, остальные поля задаются при настройке домена и внешних сервисов.
+   Не публикуйте `.env`, `s3-prod.json` или значения секретов в логах и сообщениях.
 
    Перед запуском SeaweedFS предоставьте read-доступ к конфигу только группе
    процесса внутри контейнера. Образ запускает сервер от пользователя `seaweed`,
@@ -117,6 +118,17 @@ docker compose run --rm web python manage.py loaddata car_catalog
 предназначена для отдельного каталога в формате списка объектов `brand/country/models`;
 это не Django fixture.
 
+Если переносится существующая локальная media-папка в S3, сделайте предварительную
+копию и загрузите её в бакет **до переключения приложения**:
+
+```sh
+docker compose run --rm --no-deps web python scripts/s3_files.py push /app/media
+```
+
+Команда идемпотентна; сравните итоговые количества и размеры с источником, затем
+сохраните исходную папку до проверки приложения. Для чистой production-установки,
+которая изначально использует S3, этот перенос не нужен.
+
 Запустите web и фоновые процессы; ботов поднимайте после настройки production-токенов
 BotFather:
 
@@ -158,6 +170,54 @@ curl -i "https://${SITE_DOMAIN}/static/admin/css/base.css"
 запросом `/static/`: листинг каталогов nginx выключен, поэтому на корневой URL
 директории он закономерно отвечает `403`.
 
+### Вариант без хостового nginx: bundled-proxy
+
+Этот режим предназначен для чистого VPS, где порты 80/443 свободны. Не запускайте
+его одновременно с уже работающим хостовым nginx. DNS A-запись должна указывать на
+VPS, а `.env` должен содержать правильный `SITE_DOMAIN` и `ALLOWED_HOSTS`. После
+запуска базы, Redis, S3, `s3-init`, миграций и приложения (предыдущие разделы) сначала
+получите сертификат standalone-контейнером; временно порт 80 должен быть свободен:
+
+```sh
+cd /opt/mynotes
+SITE_DOMAIN=$(sed -n 's/^SITE_DOMAIN=//p' .env)
+LE_EMAIL=admin@example.org
+docker run --rm -p 80:80 \
+  -v "$PWD/certbot/conf:/etc/letsencrypt" \
+  -v "$PWD/certbot/www:/var/www/certbot" certbot/certbot \
+  certonly --standalone --cert-name mynotes --agree-tos --no-eff-email \
+  --email "$LE_EMAIL" -d "$SITE_DOMAIN"
+```
+
+Замените `LE_EMAIL` адресом владельца сертификата. Затем запустите встроенный nginx:
+
+```sh
+docker compose --profile bundled-proxy up -d nginx
+curl -i "https://${SITE_DOMAIN}/"
+```
+
+Конфиг ожидает файлы сертификата в `certbot/conf/live/mynotes/`; каталог монтируется
+в контейнер nginx, S3 API и приватная media-раздача наружу не открываются. Получение
+и продление standalone-сертификата требует свободного порта 80. Перед `certbot renew`
+остановите bundled nginx, после команды обязательно запустите его снова:
+
+```sh
+docker compose --profile bundled-proxy stop nginx
+if docker run --rm -p 80:80 \
+    -v "$PWD/certbot/conf:/etc/letsencrypt" \
+    -v "$PWD/certbot/www:/var/www/certbot" certbot/certbot renew; then
+  RENEW_STATUS=0
+else
+  RENEW_STATUS=$?
+fi
+docker compose --profile bundled-proxy start nginx
+exit "$RENEW_STATUS"
+```
+
+Запланируйте эту проверку заранее до истечения TLS-сертификата; для полностью
+автоматического обновления используйте хостовый nginx/certbot или отдельную проверенную
+процедуру, которая гарантированно перезапускает nginx даже при ошибке Certbot.
+
 ## Резервная копия S3 media
 
 Одноразовую копию для быстрого восстановления храните вне checkout репозитория:
@@ -174,9 +234,79 @@ find "$BACKUP_DIR" -type f | wc -l
 ```
 
 Bind mount сохраняет файлы после удаления одноразового контейнера. Для production-
-хранения дополнительно копируйте backup вне VPS. Откат S3 на локальные файлы требует
-заранее проверенного Compose override; пустой `S3_ENDPOINT` только в `.env`
-недостаточен, поскольку production compose явно задаёт его для `web` и `worker`.
+хранения дополнительно копируйте backup вне VPS. Проверенный Compose override и
+порядок аварийного возврата на локальные файлы приведены ниже; пустой `S3_ENDPOINT`
+только в `.env` недостаточен, поскольку production compose явно задаёт его для
+`web` и `worker`.
+
+## Автоматические резервные копии и проверка восстановления
+
+На VPS от пользователя `deploy` (или другого владельца `/opt/mynotes`) создайте
+каталоги с закрытыми правами:
+
+```sh
+umask 077
+mkdir -p "$HOME/mynotes-backups/postgres" "$HOME/mynotes-backups/media"
+chmod 700 "$HOME/mynotes-backups" "$HOME/mynotes-backups/postgres" "$HOME/mynotes-backups/media"
+```
+
+Добавьте через `crontab -e` две команды. Первый cron ежедневно сохраняет PostgreSQL
+в custom-формате и оставляет последние 7 дней; второй каждую неделю выгружает S3
+объекты и оставляет медиа-копии за 30 дней:
+
+```cron
+15 2 * * * cd /opt/mynotes && BACKUP_DIR="$HOME/mynotes-backups/postgres" && umask 077 && mkdir -p "$BACKUP_DIR" && chmod 700 "$BACKUP_DIR" && docker compose exec -T db sh -c 'pg_dump -Fc -U "$POSTGRES_USER" -d "$POSTGRES_DB"' > "$BACKUP_DIR/mynotes-$(date +\%F).dump" && test -s "$BACKUP_DIR/mynotes-$(date +\%F).dump" && find "$BACKUP_DIR" -type f -name 'mynotes-*.dump' -mtime +6 -delete
+0 3 * * 1 cd /opt/mynotes && BACKUP_DIR="$HOME/mynotes-backups/media/$(date +\%F)" && umask 077 && mkdir -p "$BACKUP_DIR" && chmod 700 "$BACKUP_DIR" && docker compose run --rm --no-deps --user "$(id -u):$(id -g)" -v "$BACKUP_DIR:/backup" web python scripts/s3_files.py pull /backup && find "$HOME/mynotes-backups/media" -mindepth 2 -type f -mtime +29 -delete && find "$HOME/mynotes-backups/media" -mindepth 1 -maxdepth 1 -type d -empty -delete
+```
+
+В cron символ `%` в `date` должен быть экранирован обратной косой чертой. Проверьте
+расписание (`crontab -l`), журналы cron и появление непустого `.dump` после первого
+запуска. Эти копии находятся на том же VPS и не заменяют off-site backup: регулярно
+копируйте оба каталога во внешнее хранилище либо настройте snapshots у VPS-провайдера.
+Ограничьте доступ и включите шифрование резервных копий на внешнем хранилище: дамп
+содержит пользовательские данные. Не помещайте резервные файлы в `/opt/mynotes`.
+
+Для пробного восстановления PostgreSQL используйте отдельную временную БД, а не
+боевую `mynotes` (выполняйте в спокойное время; потребуется свободное место):
+
+```sh
+cd /opt/mynotes
+BACKUP_FILE="$HOME/mynotes-backups/postgres/mynotes-YYYY-MM-DD.dump"
+docker compose exec -T db sh -c 'createdb -U "$POSTGRES_USER" -T template0 mynotes_restore_test'
+docker compose exec -T db sh -c 'pg_restore -U "$POSTGRES_USER" -d mynotes_restore_test --no-owner --no-privileges' < "$BACKUP_FILE"
+docker compose exec -T db sh -c 'psql -U "$POSTGRES_USER" -d mynotes_restore_test -c "SELECT count(*) FROM django_migrations"'
+docker compose exec -T db sh -c 'dropdb -U "$POSTGRES_USER" mynotes_restore_test'
+```
+
+До запуска проверьте путь `BACKUP_FILE`. Если восстановление прервалось, удалите
+только временную БД `mynotes_restore_test` после диагностики; никогда не подменяйте
+production DB при проверке. Для медиа проверьте, что backup содержит ожидаемое число
+файлов. Для полного теста загрузите их в изолированный staging S3/bucket с отдельными
+`S3_ENDPOINT`/`S3_BUCKET`; `scripts/s3_files.py push` использует активную конфигурацию
+и не должен запускаться с production bucket во время пробного восстановления.
+
+Ежедневный `pg_dump` выполняется системным cron, а не Celery Beat: резервное копирование
+БД не должно зависеть от доступности приложения/планировщика. Периодическое копирование
+S3 media также запускается cron; Celery Beat остаётся для прикладных напоминаний.
+
+### Аварийный возврат S3 → локальные файлы
+
+Подготовлен `docker-compose.local-storage.yml`. До переключения скачайте объекты в
+named volume `media_volume`, пока web ещё использует S3:
+
+```sh
+docker compose run --rm --no-deps web python scripts/s3_files.py pull /app/media
+docker compose -f docker-compose.yml -f docker-compose.local-storage.yml config -q
+docker compose -f docker-compose.yml -f docker-compose.local-storage.yml up -d --force-recreate web worker
+```
+
+Override очищает `S3_ENDPOINT` для `web` и `worker` и монтирует общий `media_volume`
+в worker; `depends_on` сбрасывается, чтобы нездоровый S3 не блокировал перезапуск.
+Для `!reset` в Compose-файле требуется Compose plugin 2.24.4 или новее. После
+переключения проверьте несколько файлов в приложении, задачи Celery
+с загрузками и логи сервисов. Чтобы вернуться на S3, повторно создайте `web` и
+`worker` без override; не удаляйте `media_volume` и `s3_data` до подтверждения
+восстановления. Этот путь не выполняется штатно, только при аварии.
 
 Подробная схема S3, права SeaweedFS, проксирование и восстановление описаны в
 [`docs/deployment.md`](docs/deployment.md).
@@ -204,6 +334,40 @@ docker compose up -d --force-recreate web worker beat
 При ошибке проверяйте `docker compose logs --since=5m --tail=100 web`, не публикуя
 секреты.
 
+### Telegram-боты
+
+Для production используйте отдельные токены BotFather, отличные от dev-токенов.
+Укажите `TELEGRAM_VEHICLE_BOT_TOKEN` и `TELEGRAM_PLANNER_BOT_TOKEN` в серверном
+`.env`, затем пересоздайте боты: `docker compose up -d --force-recreate bot_vehicle
+bot_planner`. Боты используют long polling: перед запуском удалите ранее заданный
+webhook через BotFather/API. В приложении создайте отдельный AuthToken в
+`/accounts/tokens/`, привяжите production URL через `/addserver` и проверьте
+`/ping`, `/quick` и запланированное напоминание. Секрет AuthToken показывается только
+при выпуске; не копируйте его в Git, логи или сообщения.
+
+### Sentry и SMTP
+
+Для Sentry создайте проект Django и задайте его DSN в `SENTRY_DSN`; если пока не
+подключаете Sentry, оставьте значение пустым осознанно. После перезапуска web/worker
+отправьте безопасное тестовое событие из контейнера и подтвердите его появление в
+проекте:
+
+```sh
+docker compose run --rm --no-deps web python manage.py shell -c "import sentry_sdk; sentry_sdk.capture_message('MyNotes production smoke test')"
+```
+
+Для почты задайте SMTP host, port, username/password, sender и TLS-параметры в `.env`.
+`EMAIL_USE_SSL` и `EMAIL_USE_TLS` взаимоисключающие: SSL обычно используется с 465,
+STARTTLS — с 587. Уточните у провайдера разрешённый порт (на некоторых VPS исходящий
+SMTP ограничен), затем проверьте реальную отправку через регистрацию или сброс
+пароля; тестовое письмо также можно отправить так:
+
+```sh
+docker compose run --rm --no-deps web python manage.py shell -c "from django.core.mail import send_mail; send_mail('MyNotes SMTP smoke test', 'SMTP delivery check', None, ['YOUR_EMAIL@example.org'])"
+```
+
+Замените адрес на свой и не передавайте пароль SMTP аргументом команды.
+
 ## Обновление production через GitHub
 
 ### Локально (PowerShell, каталог проекта)
@@ -226,9 +390,9 @@ Push в `main` запускает CI, но сам по себе **не публ�
 ### GitHub (веб-интерфейс)
 
 После успешного CI создайте GitHub Release: **Releases → Draft a new release**,
-выберите или создайте тег `v0.9.3` на `main`, затем нажмите **Publish release**.
-Тег должен быть новым для репозитория; для следующих релизов увеличивайте patch
-версию. Workflow `Publish Docker Images` соберёт web/bot и опубликует образы с
+выберите или создайте новый тег на `main` (для первого production-релиза — `v1.0.0`),
+затем нажмите **Publish release**. Для следующих релизов увеличивайте версию по
+SemVer. Workflow `Publish Docker Images` соберёт web/bot и опубликует образы с
 тегами версии и `latest`. Перед продолжением дождитесь успешного завершения workflow.
 
 ### Production VPS (SSH)
@@ -243,14 +407,16 @@ cd /opt/mynotes
 git status --short
 git pull --ff-only origin main
 vim .env
-# выставить IMAGE_TAG=v0.9.3; при необходимости добавить реквизиты Яндекс OAuth
+# выставить IMAGE_TAG=latest; при необходимости добавить реквизиты Яндекс OAuth
 docker compose pull web worker beat
+docker compose pull bot_vehicle bot_planner
 docker compose run --rm --no-deps web python manage.py check --deploy
 docker compose run --rm --no-deps web python manage.py migrate --noinput
-docker compose up -d --no-deps --force-recreate web worker beat
+docker compose up -d --no-deps --force-recreate web worker beat bot_vehicle bot_planner
 docker compose ps
-docker compose logs --since=5m --tail=100 web worker beat
-curl -i https://mynotes.sokol-off.ru/
+docker compose logs --since=5m --tail=100 web worker beat bot_vehicle bot_planner
+SITE_DOMAIN=$(sed -n 's/^SITE_DOMAIN=//p' .env)
+curl -i "https://${SITE_DOMAIN}/"
 ```
 
 Перед `git pull` убедитесь, что в рабочем дереве сервера нет собственных изменений;

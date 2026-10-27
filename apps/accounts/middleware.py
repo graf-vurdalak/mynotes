@@ -6,12 +6,12 @@ OTP-устройство не подтверждено в текущей сес�
 здесь нет branch по способу входа, есть единый факт «аутентифицирован, но не верифицирован».
 """
 
-from django.core.exceptions import ObjectDoesNotExist
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.utils import timezone as dj_timezone
 from django_otp import user_has_device
-from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
+
+from apps.accounts.timezones import get_user_timezone
 
 EXEMPT_PREFIXES = (
     "/2fa/",
@@ -60,17 +60,8 @@ class UserTimezoneMiddleware:
 
     def __call__(self, request):
         user = getattr(request, "user", None)
-        tzname = None
         if user is not None and user.is_authenticated:
-            try:
-                tzname = user.settings.timezone
-            except ObjectDoesNotExist:
-                tzname = None
-        if tzname:
-            try:
-                dj_timezone.activate(ZoneInfo(tzname))
-            except (ZoneInfoNotFoundError, ValueError):
-                dj_timezone.deactivate()
+            dj_timezone.activate(get_user_timezone(user))
         else:
             # thread-local не наследуется следующему запросу на воркере
             # (анонимы и юзеры без настроек — фикс ревью №8)

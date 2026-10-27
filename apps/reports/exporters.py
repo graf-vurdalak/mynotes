@@ -8,7 +8,9 @@ import openpyxl
 from openpyxl.styles import Font, PatternFill
 from openpyxl.utils import get_column_letter
 from django.http import HttpResponse
+from django.utils import timezone
 
+from apps.accounts.timezones import get_user_timezone
 from apps.core.i18n import t
 from apps.planner.models import Event, Project
 from apps.vehicles.models import (
@@ -161,13 +163,17 @@ def ds_insurances(ctx) -> Dataset:
 
 
 def ds_planned(ctx) -> Dataset:
+    user_timezone = get_user_timezone(ctx.user)
     names = _vehicle_names(ctx.user)
     qs = PlannedEvent.objects.filter(user=ctx.user, is_deleted=False)
     if ctx.vehicle_id:
         qs = qs.filter(vehicle_id=ctx.vehicle_id)
     rows = []
     for p in sorted(qs, key=lambda x: x.planned_date or x.created_at):
-        when = p.planned_date.date() if p.planned_date else None
+        when = (
+            timezone.localtime(p.planned_date, user_timezone).date()
+            if p.planned_date else None
+        )
         if when and not _in_window(when, ctx):
             continue
         rows.append([
@@ -182,6 +188,7 @@ def ds_planned(ctx) -> Dataset:
 
 
 def _events_dataset(ctx: ExportContext, title_key: str) -> Dataset:
+    user_timezone = get_user_timezone(ctx.user)
     qs = Event.objects.filter(
         user=ctx.user, scope__code=ctx.scope_code, is_deleted=False
     ).select_related("status", "project")
@@ -189,18 +196,20 @@ def _events_dataset(ctx: ExportContext, title_key: str) -> Dataset:
         qs = qs.filter(project_id=ctx.project_id)
     rows = []
     for e in sorted(qs, key=lambda x: x.created_at, reverse=True):
+        created_at = timezone.localtime(e.created_at, user_timezone)
+        completed_at = timezone.localtime(e.completed_at, user_timezone) if e.completed_at else None
         if ctx.start is not None and not (
-            (e.created_at.date() >= ctx.start and e.created_at.date() <= ctx.end)
-            or (e.completed_at and ctx.start <= e.completed_at.date() <= ctx.end)
+            (e.created_at is not None and ctx.start <= created_at.date() <= ctx.end)
+            or (completed_at and ctx.start <= completed_at.date() <= ctx.end)
         ):
             continue
         rows.append([
             e.title, e.project.title if e.project else "",
             e.status.name if e.status else t("rep.status_none"),
             e.get_priority_display(),
-            e.start_at.strftime("%d.%m.%Y %H:%M") if e.start_at else "",
-            e.due_at.strftime("%d.%m.%Y %H:%M") if e.due_at else "",
-            e.completed_at.strftime("%d.%m.%Y %H:%M") if e.completed_at else "",
+            timezone.localtime(e.start_at, user_timezone).strftime("%d.%m.%Y %H:%M") if e.start_at else "",
+            timezone.localtime(e.due_at, user_timezone).strftime("%d.%m.%Y %H:%M") if e.due_at else "",
+            completed_at.strftime("%d.%m.%Y %H:%M") if completed_at else "",
             e.get_source_display(),
         ])
     return Dataset(t(title_key), [Block(t(title_key), [
@@ -218,10 +227,11 @@ def ds_tasks(ctx) -> Dataset:
 
 
 def ds_projects(ctx) -> Dataset:
+    user_timezone = get_user_timezone(ctx.user)
     qs = Project.objects.filter(user=ctx.user, is_deleted=False).select_related("scope")
     rows = [
         [p.title, p.scope.name, p.description or "", p.color, _bool(p.is_archived),
-         p.created_at.strftime("%d.%m.%Y")]
+         timezone.localtime(p.created_at, user_timezone).strftime("%d.%m.%Y")]
         for p in qs.order_by("created_at")
     ]
     return Dataset(t("pl.projects"), [Block(t("pl.projects"), [
@@ -367,11 +377,11 @@ def xlsx_response(dataset: Dataset, filename: str) -> HttpResponse:
     return response
 
 
-def _pdf_cell(value) -> str:
+def _pdf_cell(value, user_timezone) -> str:
     if value is None or value == "":
         return "—"
     if isinstance(value, datetime):
-        return value.strftime("%d.%m.%Y %H:%M")
+        return timezone.localtime(value, user_timezone).strftime("%d.%m.%Y %H:%M")
     if isinstance(value, date):
         return value.strftime("%d.%m.%Y")
     if isinstance(value, float):
@@ -381,7 +391,9 @@ def _pdf_cell(value) -> str:
     return str(value)
 
 
-def pdf_response(dataset: Dataset, filename: str, meta_lines: list[str]) -> HttpResponse:
+def pdf_response(
+    dataset: Dataset, filename: str, meta_lines: list[str], user_timezone
+) -> HttpResponse:
     """PDF через WeasyPrint: тот же Dataset, отрендеренный A4-таблицами (ТЗ 11.3)."""
     from django.template.loader import render_to_string
 
@@ -390,7 +402,7 @@ def pdf_response(dataset: Dataset, filename: str, meta_lines: list[str]) -> Http
     payload = Dataset(
         title=dataset.title,
         blocks=[
-            Block(b.name, b.headers, [[_pdf_cell(c) for c in row] for row in b.rows])
+            Block(b.name, b.headers, [[_pdf_cell(c, user_timezone) for c in row] for row in b.rows])
             for b in dataset.blocks
         ],
     )

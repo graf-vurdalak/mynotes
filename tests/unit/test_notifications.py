@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone as dt_tz
 from unittest.mock import MagicMock
+from zoneinfo import ZoneInfo
 
 import pytest
 from django.test import override_settings
@@ -12,7 +13,13 @@ from apps.accounts.models import User, UserSettings
 from apps.accounts.tokens import issue_token
 from apps.notifications.models import BotChatBinding, Notification
 from apps.notifications.services import bind_chat, notify
-from apps.notifications.tasks import scan_event_reminders, scan_vehicle_reminders
+from apps.notifications.tasks import (
+    _scan_insurances,
+    _scan_planned,
+    _scan_transport_tax,
+    scan_event_reminders,
+    scan_vehicle_reminders,
+)
 from apps.notifications.telegram import send_telegram
 from apps.planner.models import Event, Scope
 from apps.planner.services import get_scope
@@ -238,6 +245,41 @@ def test_scan_fires_plain_event_within_window(user, personal):
 
 
 @pytest.mark.django_db
+def test_event_reminder_formats_in_recipient_timezone(user, personal):
+    UserSettings.objects.create(
+        user=user, timezone="Asia/Yekaterinburg", reminder_default_minutes=30
+    )
+    now = datetime(2026, 12, 1, 10, 10, tzinfo=dt_tz.utc)
+    start = datetime(2026, 12, 1, 10, 40, tzinfo=dt_tz.utc)
+
+    with timezone.override(ZoneInfo("Europe/Moscow")), freeze_time(now):
+        _mk_event(user, personal, start, reminder_minutes_before=30)
+        assert scan_event_reminders() == 1
+
+    notification = Notification.objects.get(user=user, type="planner.event_reminder")
+    assert "01.12.2026 15:40" in notification.message
+
+
+@pytest.mark.django_db
+def test_recurring_event_reminder_uses_recipient_timezone_across_dst(user, personal):
+    UserSettings.objects.create(
+        user=user, timezone="Europe/Berlin", reminder_default_minutes=0
+    )
+    now = datetime(2026, 3, 29, 12, 30, tzinfo=dt_tz.utc)
+    first_occurrence = datetime(2026, 3, 28, 14, 0, tzinfo=dt_tz.utc)
+
+    with timezone.override(ZoneInfo("Europe/Moscow")), freeze_time(now):
+        _mk_event(
+            user, personal, first_occurrence,
+            reminder_minutes_before=30, recurrence_rule="daily",
+        )
+        assert scan_event_reminders() == 1
+
+    notification = Notification.objects.get(user=user, type="planner.event_reminder")
+    assert "29.03.2026 15:00" in notification.message
+
+
+@pytest.mark.django_db
 def test_scan_skips_event_outside_window(user, personal):
     UserSettings.objects.create(user=user, reminder_default_minutes=15)
     now = timezone.now()
@@ -341,6 +383,25 @@ def test_scan_insurance_expiring_creates_note_and_event(user, vehicle):
 
 
 @pytest.mark.django_db
+def test_insurance_reminder_event_uses_users_local_midnight(user, vehicle):
+    UserSettings.objects.create(
+        user=user, timezone="Asia/Yekaterinburg", insurance_reminder_days=7
+    )
+    end_date = datetime(2026, 12, 2, 0, 0).date()
+    Insurance.objects.create(user=user, vehicle=vehicle, end_date=end_date)
+    now = datetime(2026, 12, 1, 19, 30, tzinfo=dt_tz.utc)
+
+    with timezone.override(ZoneInfo("Europe/Moscow")), freeze_time(now):
+        assert _scan_insurances() == 1
+
+    event = Event.objects.get(user=user, event_type="reminder")
+    local_timezone = ZoneInfo("Asia/Yekaterinburg")
+    assert timezone.localtime(event.start_at, local_timezone) == datetime(
+        2026, 12, 2, 0, 0, tzinfo=local_timezone
+    )
+
+
+@pytest.mark.django_db
 def test_scan_insurance_outside_lead_silent(user, vehicle):
     UserSettings.objects.create(user=user, insurance_reminder_days=5)
     today = timezone.localdate()
@@ -361,6 +422,38 @@ def test_scan_planned_by_date(user, vehicle):
     # второй прогон в тот же день — дедуп
     assert scan_vehicle_reminders() == 0
     assert Notification.objects.filter(user=user, type="vehicle.planned_due").count() == 1
+
+
+@pytest.mark.django_db
+def test_planned_reminder_formats_in_recipient_timezone(user, vehicle):
+    UserSettings.objects.create(
+        user=user, timezone="Asia/Yekaterinburg", plan_reminder_days=7
+    )
+    PlannedEvent.objects.create(
+        user=user, vehicle=vehicle, description="ТО-60", reminder_type="date",
+        planned_date=datetime(2026, 12, 1, 10, 40, tzinfo=dt_tz.utc),
+    )
+    now = datetime(2026, 12, 1, 10, 10, tzinfo=dt_tz.utc)
+
+    with timezone.override(ZoneInfo("Europe/Moscow")), freeze_time(now):
+        assert _scan_planned() == 1
+
+    notification = Notification.objects.get(user=user, type="vehicle.planned_due")
+    assert "01.12.2026 15:40" in notification.message
+
+
+@pytest.mark.django_db
+def test_transport_tax_reminder_uses_users_local_date(user):
+    UserSettings.objects.create(
+        user=user, timezone="America/Los_Angeles",
+        transport_tax_month=11, transport_tax_day=30,
+    )
+    now = datetime(2026, 12, 1, 1, 0, tzinfo=dt_tz.utc)
+
+    with timezone.override(ZoneInfo("Europe/Moscow")), freeze_time(now):
+        assert _scan_transport_tax() == 1
+
+    assert Notification.objects.filter(user=user, type="vehicle.transport_tax").exists()
 
 
 @pytest.mark.django_db

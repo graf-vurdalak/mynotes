@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone as dt_tz
 from decimal import Decimal
 
 import pytest
@@ -7,7 +7,7 @@ from django.test import RequestFactory
 from django.urls import reverse
 from django.utils import timezone
 
-from apps.accounts.models import User
+from apps.accounts.models import User, UserSettings
 from apps.planner import services as planner_services
 from apps.planner.models import Event, Project, Scope, Status, StatusHistory
 from apps.reports.services import (
@@ -456,6 +456,22 @@ def test_export_planner_report_sheets(client, user, work):
     wb = _load_xlsx(response)
     assert "Сводка" in wb.sheetnames
     assert any(name.startswith("Количество задач по статусам") for name in wb.sheetnames)
+
+
+@pytest.mark.django_db
+def test_event_export_formats_datetime_in_user_timezone(client, user, work):
+    UserSettings.objects.create(user=user, timezone="Asia/Dubai")
+    Event.objects.create(
+        user=user, scope=work, title="Встреча",
+        start_at=datetime(2026, 12, 1, 10, 40, tzinfo=dt_tz.utc),
+    )
+    client.force_login(user)
+
+    response = client.get("/reports/export/events.xlsx?scope=work&period=all")
+    workbook = _load_xlsx(response)
+    values = [cell.value for sheet in workbook.worksheets for row in sheet.iter_rows() for cell in row]
+
+    assert "01.12.2026 14:40" in values
 
 
 @pytest.mark.django_db
